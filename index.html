@@ -1,0 +1,1412 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cursor Value Intelligence Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f8f9f6;
+      --surface: #ffffff;
+      --surface2: #fcfcfa;
+      --border: rgba(15, 25, 40, 0.2);
+      --text: #12243b;
+      --muted: #5f738f;
+      --amber: #f5a623;
+      --teal: #2dd4bf;
+      --blue: #4f8ef7;
+      --ui-size: 20px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "DM Sans", sans-serif;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.01;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+      z-index: 1;
+    }
+
+    .app {
+      position: relative;
+      z-index: 2;
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .ui-title {
+      margin: 0 0 8px;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .tabs {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    .tab {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 12px 20px;
+      font-weight: 700;
+      font-size: var(--ui-size);
+      cursor: pointer;
+      border-right: 1px solid var(--border);
+    }
+
+    .tab:last-child { border-right: none; }
+    .icon-tab {
+      width: 54px;
+      padding-left: 0;
+      padding-right: 0;
+      text-align: center;
+      font-size: 22px;
+      line-height: 1;
+    }
+    .tab.active {
+      background: #eef6ff;
+      color: var(--text);
+    }
+
+    .copy-link {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: var(--ui-size);
+      cursor: pointer;
+    }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .search-icon-btn {
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .compact-select {
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 5px 8px;
+      font-size: calc(var(--ui-size) - 7px);
+      width: 130px;
+    }
+
+    .controls {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .status-row {
+      margin: 2px 0 10px;
+      min-height: 18px;
+    }
+
+    .controls label { font-size: var(--ui-size); color: var(--muted); }
+    select {
+      margin-left: 6px;
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: var(--ui-size);
+    }
+
+    .persona-filters {
+      display: none;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding-left: 10px;
+      border-left: 1px solid var(--border);
+    }
+    .persona-filters.show { display: flex; }
+    .company-controls { display: none; }
+    .company-input {
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: calc(var(--ui-size) - 4px);
+      min-width: 220px;
+    }
+    .action-btn {
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: calc(var(--ui-size) - 4px);
+      cursor: pointer;
+    }
+    .apply-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: calc(var(--ui-size) - 4px);
+      color: var(--muted);
+      margin-left: 6px;
+    }
+    .action-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .action-btn.active { border-color: var(--blue); box-shadow: inset 0 0 0 1px rgba(79,142,247,0.25); }
+    .research-status {
+      font-size: calc(var(--ui-size) - 6px);
+      color: var(--muted);
+      width: 100%;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: 1fr 48px 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .flow-arrow {
+      align-self: center;
+      justify-self: center;
+      color: var(--muted);
+      font-size: 40px;
+      line-height: 1;
+    }
+
+    .column {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      padding: 12px;
+      min-height: 420px;
+    }
+
+    .column h2 {
+      margin: 0 0 10px;
+      font-size: var(--ui-size);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .cards {
+      display: grid;
+      gap: 10px;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 11px;
+      transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+      cursor: pointer;
+    }
+    .card:hover { transform: translateY(-1px); }
+    .card.active {
+      border-color: var(--blue);
+      box-shadow: inset 0 0 0 1px rgba(79, 142, 247, 0.25);
+    }
+    .card.related {
+      border-color: var(--teal);
+      box-shadow: inset 0 0 0 1px rgba(45, 212, 191, 0.25);
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: var(--ui-size);
+      line-height: 0.95;
+      font-weight: 700;
+    }
+
+    .card-sub {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: var(--ui-size);
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .info-btn {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      border-radius: 8px;
+      cursor: pointer;
+      padding: 5px 8px;
+      font-size: calc(var(--ui-size) - 8px);
+    }
+
+    .cs-btn {
+      border: none;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      padding: 0;
+      font-size: calc(var(--ui-size) - 8px);
+      text-decoration: underline;
+    }
+
+    .info-btn:hover { border-color: var(--amber); }
+
+    .info-panel {
+      margin-top: 8px;
+      display: none;
+      border: 1px solid rgba(245, 166, 35, 0.4);
+      background: rgba(245, 166, 35, 0.1);
+      border-radius: 8px;
+      padding: 8px;
+      color: #7a5519;
+      font-size: var(--ui-size);
+      line-height: 1.45;
+    }
+    .info-panel.open { display: block; }
+
+    .guidance-board {
+      display: grid;
+      grid-template-columns: minmax(340px, 1.25fr) minmax(320px, 1fr) minmax(320px, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .guidance-col {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      padding: 12px;
+      min-height: 300px;
+    }
+
+    .guidance-col h3 {
+      margin: 0 0 10px;
+      font-size: var(--ui-size);
+      color: var(--text);
+    }
+
+    .guidance-empty {
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      color: var(--muted);
+      font-size: calc(var(--ui-size) - 4px);
+      line-height: 1.35;
+    }
+
+    .guidance-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .guidance-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface2);
+      padding: 11px;
+      transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+      cursor: pointer;
+    }
+    .guidance-card:hover { transform: translateY(-1px); }
+    .guidance-card.active {
+      border-color: var(--blue);
+      box-shadow: inset 0 0 0 1px rgba(79, 142, 247, 0.25);
+    }
+
+    .guidance-title {
+      margin: 0 0 6px;
+      font-size: var(--ui-size);
+      font-weight: 700;
+      line-height: 1.1;
+      word-break: normal;
+      overflow-wrap: normal;
+      hyphens: none;
+    }
+
+    .guidance-sub {
+      margin: 0 0 8px;
+      font-size: calc(var(--ui-size) - 4px);
+      color: var(--muted);
+      line-height: 1.4;
+      white-space: normal;
+      overflow-wrap: break-word;
+      word-break: normal;
+    }
+
+    .tag-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .g-tag {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: calc(var(--ui-size) - 4px);
+      color: var(--muted);
+      background: #f6f8fb;
+    }
+    .brief-panel {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      padding: 12px;
+      min-height: 280px;
+    }
+    .brief-title {
+      margin: 0 0 8px;
+      font-size: var(--ui-size);
+      font-weight: 700;
+    }
+    .brief-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .brief-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface2);
+      padding: 10px;
+    }
+    .brief-card h4 {
+      margin: 0 0 6px;
+      font-size: calc(var(--ui-size) - 6px);
+    }
+    .brief-card p, .brief-card li {
+      margin: 0;
+      font-size: calc(var(--ui-size) - 7px);
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    .brief-card ul { margin: 0; padding-left: 18px; }
+    .sources-list { display: grid; gap: 4px; }
+    .sources-list a {
+      color: var(--blue);
+      font-size: calc(var(--ui-size) - 8px);
+      text-decoration: underline;
+      word-break: break-all;
+    }
+    .roi-wrap {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+    .roi-grid, .roi-results {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .roi-field label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: calc(var(--ui-size) - 7px);
+      color: var(--muted);
+    }
+    .roi-field input {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 8px;
+      font-size: calc(var(--ui-size) - 5px);
+      color: var(--text);
+    }
+    .roi-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface2);
+      padding: 10px;
+    }
+    .roi-card h4 {
+      margin: 0 0 6px;
+      font-size: calc(var(--ui-size) - 8px);
+      color: var(--muted);
+    }
+    .roi-card p {
+      margin: 0;
+      font-size: calc(var(--ui-size) - 2px);
+      font-weight: 700;
+    }
+
+    @media (max-width: 920px) {
+      .board { grid-template-columns: 1fr; }
+      .guidance-board { grid-template-columns: 1fr; }
+      .flow-arrow { display: none; }
+      .brief-grid { grid-template-columns: 1fr; }
+      .roi-grid, .roi-results { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1 class="ui-title">Cursor Value Intelligence Platform</h1>
+    <div class="topbar">
+      <div class="tabs">
+        <button class="tab active" data-mode="dev">Developer</button>
+        <button class="tab" data-mode="exec">Executive</button>
+        <button class="tab" data-mode="guidance">Use Cases</button>
+        <button class="tab icon-tab" data-mode="research" title="Research">🔗</button>
+        <button class="tab" data-mode="roi">ROI</button>
+      </div>
+      <div class="topbar-right">
+        <select id="industrySelect" class="compact-select">
+          <option value="">Industry</option>
+          <option value="fintech">FinServ</option>
+          <option value="tech">Tech</option>
+          <option value="defense">Defense</option>
+          <option value="health">Health</option>
+          <option value="retail">Retail</option>
+        </select>
+        <input id="companyInput" class="company-input" type="text" placeholder="Company name (e.g. Salesforce)" />
+        <button id="researchBtn" class="search-icon-btn" title="Run research" aria-label="Run research">⌕</button>
+        <label class="apply-wrap"><input id="applyRewriteChk" type="checkbox" /> Apply</label>
+        <button id="copyLinkBtn" class="copy-link">Copy link</button>
+      </div>
+    </div>
+    <div class="status-row">
+      <div id="researchStatus" class="research-status"></div>
+    </div>
+
+    <div class="controls">
+      <div id="personaFilters" class="persona-filters">
+        <label><input type="checkbox" value="cto" /> CTO</label>
+        <label><input type="checkbox" value="ciso" /> CISO</label>
+        <label><input type="checkbox" value="cfo" /> CFO</label>
+        <label><input type="checkbox" value="cpo" /> CPO / VP Eng</label>
+      </div>
+    </div>
+
+    <div class="board">
+      <section class="column">
+        <h2 id="leftTitle"></h2>
+        <div id="leftCards" class="cards"></div>
+      </section>
+      <div class="flow-arrow">→</div>
+      <section class="column">
+        <h2 id="rightTitle"></h2>
+        <div id="rightCards" class="cards"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const capabilities = [
+      { id: "tab", title: "Tab completion", sub: "Always-on, multi-line prediction", detail: "Cursor predicts 2-10 lines as you type so developers keep momentum with near-zero context switching.", outcomes: ["velocity", "quality", "retention"] },
+      { id: "cmdk", title: "Inline edit (⌘K)", sub: "Highlight, describe, review diff", detail: "Developers describe a change and review exact diffs before accepting anything.", outcomes: ["quality", "security", "cost"] },
+      { id: "chat", title: "Codebase chat", sub: "Ask questions across repos", detail: "Natural-language answers point to exact files and patterns across large codebases.", outcomes: ["velocity", "retention", "scale", "onboarding"] },
+      { id: "agent", title: "Agent mode", sub: "Multi-file autonomous execution", detail: "Agent mode executes larger scoped work across files and tests with human review at the end.", outcomes: ["velocity", "scale", "quality", "cost"] },
+      { id: "bugbot", title: "BugBot", sub: "Automated PR review", detail: "BugBot catches issues and anti-patterns earlier in the cycle before humans spend review time.", outcomes: ["quality", "security", "cost"] },
+      { id: "rules", title: "Team rules", sub: "Version-controlled standards", detail: "Rules encode team standards into each AI interaction so outputs stay aligned and compliant.", outcomes: ["security", "compliance", "scale"] },
+      { id: "automations", title: "Automations", sub: "Event-triggered agents", detail: "Background agents run from events and schedules to move backlog forward continuously.", outcomes: ["velocity", "scale", "cost"] },
+      { id: "privacy", title: "Privacy & security", sub: "SOC 2, zero retention, self-hosted", detail: "Enterprise controls keep code governance intact with privacy mode and self-hosting options.", outcomes: ["security", "compliance"] },
+      { id: "mcp", title: "MCP integrations", sub: "Connect internal systems and tools", detail: "MCP links Cursor to internal data and services so teams resolve tasks without context switching.", outcomes: ["velocity", "quality", "onboarding"] },
+      { id: "models", title: "Model choice", sub: "Choose best model per task", detail: "Teams can route workflows to the model that best fits speed, quality, and cost constraints.", outcomes: ["quality", "cost", "scale"] }
+    ];
+
+    const outcomes = [
+      { id: "velocity", title: "Engineering velocity", sub: "Ship faster with the same team", detail: "Reduce time on mechanical work so more engineering effort ships customer value.", caps: ["tab", "agent", "chat", "automations", "mcp"], cs: "Salesforce scaled Cursor to 20K+ engineers and reported about 30% velocity improvement in measured teams." },
+      { id: "quality", title: "Code quality at scale", sub: "Higher standards across all engineers", detail: "Raise quality floor by reducing friction in testing, review, and safe refactoring.", caps: ["tab", "cmdk", "bugbot", "agent", "mcp", "models"], cs: "Grab reported stronger PR quality and faster code-review cycles with AI-assisted edits and checks in daily use." },
+      { id: "security", title: "Security posture", sub: "Guardrails baked into every interaction", detail: "Security checks and standards are applied earlier at coding and PR-review stages.", caps: ["cmdk", "bugbot", "rules", "privacy"], cs: "Enterprise customers use Team Rules plus Privacy Mode to enforce secure patterns before merge, reducing downstream remediation effort." },
+      { id: "compliance", title: "Compliance & governance", sub: "Auditability, data residency, control", detail: "Versioned rules and deployment controls support consistent, auditable compliance outcomes.", caps: ["rules", "privacy"], cs: "Regulated teams adopt self-hosting and zero-retention routing to satisfy procurement and compliance reviews faster." },
+      { id: "scale", title: "Engineering scale", sub: "Do more without hiring more", detail: "Expand team leverage with autonomous execution and reusable standards.", caps: ["agent", "automations", "rules", "models"], cs: "Grab saw 98% monthly active adoption and broad MR usage, increasing output without proportional headcount growth." },
+      { id: "retention", title: "Developer retention", sub: "The tooling top engineers expect", detail: "Strong developer experience helps attract and retain high-performing engineering talent.", caps: ["tab", "chat"], cs: "In head-to-head evaluations, 93% of engineers preferred Cursor over Copilot, supporting stronger developer satisfaction." },
+      { id: "cost", title: "Engineering cost efficiency", sub: "Lower cost per unit of delivered software", detail: "Faster delivery and fewer defects reduce the fully loaded cost of shipping and maintaining software.", caps: ["agent", "automations", "bugbot", "models", "cmdk"], cs: "A 100-engineer org at $180K average cost with 30% productivity gain yields about $5.4M value vs ~$480K annual license cost." },
+      { id: "onboarding", title: "Onboarding speed", sub: "New engineers contribute in days, not weeks", detail: "Cross-repo context and guided edits collapse learning cycles so new hires deliver sooner.", caps: ["chat", "mcp", "tab"], cs: "Teams report onboarding compression from weeks to hours by using codebase chat to answer architecture and ownership questions instantly." }
+    ];
+    const baseCapabilities = JSON.parse(JSON.stringify(capabilities));
+    const baseOutcomes = JSON.parse(JSON.stringify(outcomes));
+
+    const executiveOutcomeAffinity = {
+      cto: ["velocity", "quality", "scale", "security", "onboarding"],
+      ciso: ["security", "compliance"],
+      cfo: ["velocity", "scale", "compliance", "cost"],
+      cpo: ["velocity", "quality", "retention", "scale", "onboarding"]
+    };
+
+    const industryLanguage = {
+      fintech: {
+        velocity: "Accelerate product delivery while preserving reliability in regulated transaction flows.",
+        quality: "Reduce defects in high-risk payment and ledger systems.",
+        security: "Harden customer fund and identity pathways by default.",
+        compliance: "Support SOC, PCI, and audit traceability across engineering workflows.",
+        scale: "Increase delivery capacity without linear headcount growth.",
+        retention: "Retain scarce fintech engineering talent with modern tooling.",
+        cost: "Improve engineering economics while preserving quality and control.",
+        onboarding: "Ramp engineers into complex financial systems with less tribal handoff."
+      },
+      tech: {
+        velocity: "Increase release throughput across platform and product teams.",
+        quality: "Improve code consistency across large, fast-moving codebases.",
+        security: "Embed secure coding patterns in daily delivery.",
+        compliance: "Strengthen policy adherence while preserving development speed.",
+        scale: "Expand engineering output as product surface area grows.",
+        retention: "Keep top engineers engaged with high-leverage workflows.",
+        cost: "Increase software output per engineering dollar.",
+        onboarding: "Help engineers move across services with faster context acquisition."
+      },
+      defense: {
+        velocity: "Deliver mission software faster without compromising control boundaries.",
+        quality: "Improve correctness in critical systems and operations tooling.",
+        security: "Shift secure-by-default coding into daily implementation work.",
+        compliance: "Support strict audit, residency, and governance requirements.",
+        scale: "Increase delivery throughput under constrained staffing models.",
+        retention: "Retain cleared engineering talent through modern developer experience.",
+        cost: "Increase mission software output under fixed budget constraints.",
+        onboarding: "Accelerate ramp-up on secure systems and legacy codebases."
+      },
+      health: {
+        velocity: "Speed up delivery of patient and clinician-facing capabilities responsibly.",
+        quality: "Raise reliability in systems touching clinical workflows.",
+        security: "Reduce risk in PHI-adjacent engineering practices.",
+        compliance: "Improve consistency against HIPAA and internal policy controls.",
+        scale: "Expand delivery capacity as care and data platforms grow.",
+        retention: "Keep healthcare engineering teams productive and stable.",
+        cost: "Reduce rework and support cost through higher quality delivery.",
+        onboarding: "Get new engineers productive quickly on regulated health platforms."
+      },
+      retail: {
+        velocity: "Ship commerce and fulfillment improvements faster across channels.",
+        quality: "Increase reliability in storefront, checkout, and operations code.",
+        security: "Strengthen protections around customer and transaction data.",
+        compliance: "Improve auditability in payment and privacy-sensitive workflows.",
+        scale: "Support peak-season roadmap demand with existing teams.",
+        retention: "Keep product engineering teams energized in competitive markets.",
+        cost: "Improve margin by reducing engineering waste and rework.",
+        onboarding: "Onboard engineers quickly across storefront, logistics, and platform domains."
+      }
+    };
+
+    const guidanceUseCases = [
+      {
+        id: "feature",
+        title: "Build a new feature end-to-end",
+        base: "Ship a net-new feature with tests and safe review gates.",
+        industry: {
+          fintech: "Ship a new payments or risk feature with strong correctness and auditability.",
+          health: "Ship a clinical workflow feature while preserving reliability and policy controls.",
+          defense: "Ship mission software increments with strict control and review.",
+          retail: "Ship customer-facing storefront or fulfillment features before demand peaks.",
+          tech: "Ship product capabilities quickly across distributed service boundaries."
+        },
+        cursor: [
+          { title: "Implement interactively", sub: "Use Cursor for coding loops, inline edits, and quick local validation.", tags: ["IDE", "Fast feedback", "Human-in-loop"] },
+          { title: "Review diffs in context", sub: "Use Cursor to accept/reject exact changes as you iterate.", tags: ["Diff review", "Control", "Quality"] }
+        ],
+        claude: [
+          { title: "Parallelize mechanical follow-ons", sub: "Use Claude Code for broad repetitive updates once the pattern is proven.", tags: ["Batch", "Scale", "Autonomous"] },
+          { title: "Automate pipeline tasks", sub: "Run non-interactive checks, docs, and migration follow-ups in CI/CD.", tags: ["CI/CD", "Repeatable", "Ops"] }
+        ]
+      },
+      {
+        id: "refactor",
+        title: "Large refactor across many files",
+        base: "Modernize architecture without stalling delivery.",
+        industry: {
+          fintech: "Refactor core ledger and integration modules with risk controls.",
+          health: "Refactor patient-data pathways while preserving compliance constraints.",
+          defense: "Refactor legacy mission modules with traceability and rollback confidence.",
+          retail: "Refactor checkout, inventory, and orchestration services at scale.",
+          tech: "Refactor platform services and shared contracts across teams."
+        },
+        cursor: [
+          { title: "Design and validate pattern", sub: "Use Cursor to establish the first high-quality implementation path.", tags: ["Design", "Human-in-loop", "Quality"] },
+          { title: "Spot-check critical hotspots", sub: "Use Cursor where nuanced judgment is required before merge.", tags: ["Risk", "Review", "Control"] }
+        ],
+        claude: [
+          { title: "Execute repo-wide migration", sub: "Use Claude Code to apply validated changes across large file sets.", tags: ["Large refactor", "Autonomous", "Scale"] },
+          { title: "Run overnight batches", sub: "Execute long-running migration waves outside developer hours.", tags: ["Off-hours", "Throughput", "Batch"] }
+        ]
+      },
+      {
+        id: "tests",
+        title: "Improve test coverage quickly",
+        base: "Raise confidence and reduce regressions before release.",
+        industry: {
+          fintech: "Raise test confidence in payment and fraud-sensitive paths.",
+          health: "Increase coverage on patient-critical workflows.",
+          defense: "Strengthen reliability tests for mission-relevant systems.",
+          retail: "Increase checkout and fulfillment regression protection.",
+          tech: "Increase quality coverage across platform and product services."
+        },
+        cursor: [
+          { title: "Author targeted tests", sub: "Use Cursor for focused high-value tests around edge behavior.", tags: ["IDE", "Precision", "Quality"] },
+          { title: "Tune failing cases", sub: "Use Cursor to quickly iterate when tests fail locally.", tags: ["Debug", "Feedback loop", "Control"] }
+        ],
+        claude: [
+          { title: "Generate broad baseline suites", sub: "Use Claude Code for repetitive test scaffolding across modules.", tags: ["Automation", "Scale", "Coverage"] },
+          { title: "Automate coverage campaigns", sub: "Schedule recurring coverage improvements in CI workflows.", tags: ["CI/CD", "Repeatable", "Ops"] }
+        ]
+      },
+      {
+        id: "bugs",
+        title: "Triage and fix production bugs",
+        base: "Resolve incidents fast without introducing new risk.",
+        industry: {
+          fintech: "Resolve transaction and reliability incidents with strong safeguards.",
+          health: "Fix production defects affecting care workflows with minimal disruption.",
+          defense: "Resolve mission-impacting defects under strict controls.",
+          retail: "Fix high-impact commerce incidents during active traffic windows.",
+          tech: "Resolve platform incidents quickly across interconnected services."
+        },
+        cursor: [
+          { title: "Interactive root-cause analysis", sub: "Use Cursor to inspect code paths and produce a precise fix quickly.", tags: ["Debug", "Human judgment", "Speed"] },
+          { title: "Validate patch safely", sub: "Use Cursor diff controls before promoting changes.", tags: ["Review", "Control", "Safety"] }
+        ],
+        claude: [
+          { title: "Backport and patch variants", sub: "Use Claude Code for repetitive branch patching and changelog updates.", tags: ["Batch", "Ops", "Scale"] },
+          { title: "Post-incident hardening", sub: "Run follow-up automation to apply preventive checks broadly.", tags: ["Autonomous", "Reliability", "Repeatable"] }
+        ]
+      },
+      {
+        id: "onboarding",
+        title: "Ramp a new engineer quickly",
+        base: "Get a new team member shipping meaningful code in days.",
+        industry: {
+          fintech: "Ramp engineers into regulated transaction systems faster.",
+          health: "Ramp engineers into regulated clinical platforms with confidence.",
+          defense: "Ramp engineers into secure mission systems with guardrails.",
+          retail: "Ramp engineers across storefront and logistics codebases quickly.",
+          tech: "Ramp engineers across distributed services and platform tools."
+        },
+        cursor: [
+          { title: "Guided interactive learning", sub: "Use Cursor to answer codebase questions and support first implementations.", tags: ["Onboarding", "IDE", "Context"] },
+          { title: "Supervised first PRs", sub: "Use Cursor for close-loop coaching and review during early contributions.", tags: ["Mentoring", "Quality", "Control"] }
+        ],
+        claude: [
+          { title: "Automate onboarding tasks", sub: "Use Claude Code for setup scripts, docs sync, and repetitive starter tasks.", tags: ["Automation", "Repeatable", "Ops"] },
+          { title: "Generate starter migration/checklists", sub: "Create standardized onboarding accelerators for each team.", tags: ["Scale", "Standardization", "Leverage"] }
+        ]
+      }
+    ];
+
+    const state = {
+      mode: "dev",
+      industry: "",
+      companyQuery: "",
+      isResearching: false,
+      researchError: "",
+      applyRewrite: false,
+      researchContext: null,
+      personaMessaging: null,
+      tailoredCards: null,
+      selectedCapabilityId: null,
+      selectedOutcomeIds: [],
+      selectedUseCaseId: null,
+      roiEngineers: 100,
+      roiSalaryK: 180,
+      roiVelocityPct: 30,
+      executivePersonas: [],
+      openInfoIds: [],
+      openCsIds: []
+    };
+
+    const els = {
+      tabs: Array.from(document.querySelectorAll(".tab")),
+      copyBtn: document.getElementById("copyLinkBtn"),
+      controls: document.querySelector(".controls"),
+      board: document.querySelector(".board"),
+      industrySelect: document.getElementById("industrySelect"),
+      companyInput: document.getElementById("companyInput"),
+      researchBtn: document.getElementById("researchBtn"),
+      applyRewriteChk: document.getElementById("applyRewriteChk"),
+      researchStatus: document.getElementById("researchStatus"),
+      personaFilters: document.getElementById("personaFilters"),
+      personaInputs: Array.from(document.querySelectorAll("#personaFilters input[type='checkbox']")),
+      leftTitle: document.getElementById("leftTitle"),
+      rightTitle: document.getElementById("rightTitle"),
+      leftCards: document.getElementById("leftCards"),
+      rightCards: document.getElementById("rightCards")
+    };
+
+    function getCapabilities() {
+      if (!state.applyRewrite || !state.tailoredCards || !state.tailoredCards.capabilitiesById) return baseCapabilities;
+      return baseCapabilities.map((cap) => ({ ...cap, ...(state.tailoredCards.capabilitiesById[cap.id] || {}) }));
+    }
+
+    function getOutcomes() {
+      if (!state.applyRewrite || !state.tailoredCards || !state.tailoredCards.outcomesById) return baseOutcomes;
+      return baseOutcomes.map((out) => ({ ...out, ...(state.tailoredCards.outcomesById[out.id] || {}) }));
+    }
+
+    function connectedIdsFromSelection() {
+      const currentCapabilities = getCapabilities();
+      const currentOutcomes = getOutcomes();
+      if (state.mode === "dev") {
+        if (!state.selectedCapabilityId) return new Set();
+        const cap = currentCapabilities.find((x) => x.id === state.selectedCapabilityId);
+        return new Set(cap ? cap.outcomes : []);
+      }
+      if (!state.selectedOutcomeIds.length) return new Set();
+      const caps = new Set();
+      state.selectedOutcomeIds.forEach((oid) => {
+        const out = currentOutcomes.find((x) => x.id === oid);
+        (out ? out.caps : []).forEach((cid) => caps.add(cid));
+      });
+      return caps;
+    }
+
+    function highlightedOutcomeIdsFromPersonas() {
+      const ids = new Set();
+      state.executivePersonas.forEach((p) => {
+        (executiveOutcomeAffinity[p] || []).forEach((o) => ids.add(o));
+      });
+      return ids;
+    }
+
+    function parseHash() {
+      const raw = window.location.hash.replace(/^#/, "");
+      state.companyQuery = "";
+      state.applyRewrite = false;
+      if (!raw) return;
+      const params = new URLSearchParams(raw);
+      const mode = params.get("mode");
+      const industry = params.get("industry");
+      const cap = params.get("cap");
+      const out = params.get("out");
+      const usecase = params.get("usecase");
+      const company = params.get("company");
+      const rewrite = params.get("rewrite");
+      const personas = (params.get("personas") || "").split(",").filter(Boolean);
+
+      if (mode === "dev" || mode === "exec" || mode === "guidance" || mode === "research" || mode === "roi") state.mode = mode;
+      if (industry && industryLanguage[industry]) state.industry = industry;
+      if (!industry) state.industry = "";
+      if (cap && baseCapabilities.some((x) => x.id === cap)) state.selectedCapabilityId = cap;
+      if (out) {
+        state.selectedOutcomeIds = out
+          .split(",")
+          .filter((oid) => baseOutcomes.some((x) => x.id === oid));
+      }
+      if (usecase && guidanceUseCases.some((u) => u.id === usecase)) state.selectedUseCaseId = usecase;
+      if (company) state.companyQuery = company;
+      if (rewrite === "1") state.applyRewrite = true;
+      const re = Number(params.get("re"));
+      const rs = Number(params.get("rs"));
+      const rv = Number(params.get("rv"));
+      if (Number.isFinite(re) && re >= 0) state.roiEngineers = re;
+      if (Number.isFinite(rs) && rs >= 0) state.roiSalaryK = rs;
+      if (Number.isFinite(rv) && rv >= 0) state.roiVelocityPct = rv;
+      if (state.mode === "exec") state.executivePersonas = personas.filter((p) => executiveOutcomeAffinity[p]);
+    }
+
+    function writeHash() {
+      const params = new URLSearchParams();
+      params.set("mode", state.mode);
+      if (state.industry) params.set("industry", state.industry);
+      if (state.selectedCapabilityId) params.set("cap", state.selectedCapabilityId);
+      if (state.selectedOutcomeIds.length) params.set("out", state.selectedOutcomeIds.join(","));
+      if (state.selectedUseCaseId) params.set("usecase", state.selectedUseCaseId);
+      if (state.companyQuery) params.set("company", state.companyQuery);
+      if (state.applyRewrite) params.set("rewrite", "1");
+      if (state.mode === "roi") {
+        params.set("re", String(state.roiEngineers));
+        params.set("rs", String(state.roiSalaryK));
+        params.set("rv", String(state.roiVelocityPct));
+      }
+      if (state.mode === "exec" && state.executivePersonas.length) params.set("personas", state.executivePersonas.join(","));
+      const nextHash = "#" + params.toString();
+      if (window.location.hash !== nextHash) history.replaceState(null, "", nextHash);
+    }
+
+    function cardSubline(item, type) {
+      if (type !== "outcome") return item.sub;
+      if (!state.industry) return item.sub;
+      const override = industryLanguage[state.industry] && industryLanguage[state.industry][item.id];
+      return override || item.sub;
+    }
+
+    function visibleExecutiveOutcomes() {
+      const currentOutcomes = getOutcomes();
+      if (state.mode !== "exec" || state.executivePersonas.length === 0) return currentOutcomes;
+      const allowed = highlightedOutcomeIdsFromPersonas();
+      return currentOutcomes.filter((o) => allowed.has(o.id));
+    }
+
+    function toggleInArray(arr, id) {
+      return arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id];
+    }
+
+    function renderCards(list, sideType) {
+      const connected = connectedIdsFromSelection();
+      const personaHighlights = highlightedOutcomeIdsFromPersonas();
+      const hasSelection = state.mode === "dev" ? !!state.selectedCapabilityId : state.selectedOutcomeIds.length > 0;
+
+      return list.filter((item) => {
+        if (!hasSelection) return true;
+        const isOutcome = sideType === "outcome";
+        if (state.mode === "dev") {
+          if (isOutcome) return connected.has(item.id);
+          return state.selectedCapabilityId === item.id;
+        }
+        if (isOutcome) return state.selectedOutcomeIds.includes(item.id);
+        return connected.has(item.id);
+      }).map((item) => {
+        const isOutcome = sideType === "outcome";
+        const itemId = item.id;
+        const active = state.mode === "dev"
+          ? (!isOutcome && state.selectedCapabilityId === itemId)
+          : (isOutcome && state.selectedOutcomeIds.includes(itemId));
+
+        const isConnected = connected.has(itemId);
+        const isPersonaHighlighted = isOutcome && state.mode === "exec" && personaHighlights.has(itemId);
+        const infoKey = `${sideType}:${itemId}`;
+        const open = state.openInfoIds.includes(infoKey);
+
+        return `
+          <article class="card card-selectable ${active ? "active" : ""} ${isConnected || isPersonaHighlighted ? "related" : ""}" data-select-type="${sideType}" data-id="${itemId}">
+            <div class="card-head">
+              <div>
+                <h3 class="card-title">${item.title}</h3>
+                <p class="card-sub">${cardSubline(item, sideType)}</p>
+              </div>
+              <div class="actions">
+                <button class="info-btn" data-info="${sideType}:${itemId}">(i)</button>
+                ${isOutcome ? `<button class="cs-btn" data-cs="${itemId}">(CS)</button>` : ""}
+              </div>
+            </div>
+            <div class="info-panel ${open ? "open" : ""}">
+              ${item.detail}
+            </div>
+            ${isOutcome ? `<div class="info-panel ${state.openCsIds.includes(itemId) ? "open" : ""}">${item.cs}</div>` : ""}
+          </article>
+        `;
+      }).join("");
+    }
+
+    function renderGuidance() {
+      els.controls.style.display = "flex";
+      els.personaFilters.classList.remove("show");
+      const selected = guidanceUseCases.find((u) => u.id === state.selectedUseCaseId) || null;
+      const useCaseCards = guidanceUseCases.map((u) => {
+        const active = selected && selected.id === u.id;
+        const sub = state.industry && u.industry[state.industry] ? u.industry[state.industry] : u.base;
+        return `
+          <article class="guidance-card card-selectable ${active ? "active" : ""}" data-usecase="${u.id}">
+            <h4 class="guidance-title">${u.title}</h4>
+            <p class="guidance-sub">${sub}</p>
+          </article>
+        `;
+      }).join("");
+
+      els.board.innerHTML = `
+        <section class="guidance-board">
+          <article class="guidance-col">
+            <h3>Top 5 developer use cases</h3>
+            <div class="guidance-list">
+              ${useCaseCards}
+            </div>
+          </article>
+          <article class="guidance-col">
+            <h3>Use Cursor for</h3>
+            <div class="guidance-list">
+              ${selected ? selected.cursor.map((g) => `
+                <div class="guidance-card">
+                  <h4 class="guidance-title">${g.title}</h4>
+                  <p class="guidance-sub">${g.sub}</p>
+                  <div class="tag-row">${g.tags.map((t) => `<span class="g-tag">${t}</span>`).join("")}</div>
+                </div>
+              `).join("") : `<div class="guidance-empty">Select a use case on the left to see where Cursor is best used.</div>`}
+            </div>
+          </article>
+          <article class="guidance-col">
+            <h3>Use Claude Code for</h3>
+            <div class="guidance-list">
+              ${selected ? selected.claude.map((g) => `
+                <div class="guidance-card">
+                  <h4 class="guidance-title">${g.title}</h4>
+                  <p class="guidance-sub">${g.sub}</p>
+                  <div class="tag-row">${g.tags.map((t) => `<span class="g-tag">${t}</span>`).join("")}</div>
+                </div>
+              `).join("") : `<div class="guidance-empty">After selecting a use case, this column shows where Claude Code provides the most leverage.</div>`}
+            </div>
+          </article>
+        </section>
+      `;
+
+      document.querySelectorAll("[data-usecase]").forEach((card) => {
+        card.addEventListener("click", () => {
+          const id = card.getAttribute("data-usecase");
+          state.selectedUseCaseId = state.selectedUseCaseId === id ? null : id;
+          render();
+        });
+      });
+    }
+
+    function getCompanyBriefHtml() {
+      if (!state.researchContext) {
+        return `<div class="guidance-empty">Run company research to generate a tailored brief.</div>`;
+      }
+      const brief = state.researchContext;
+      const priorities = (brief.priorities || []).map((p) => `<li>${p}</li>`).join("");
+      const stories = (brief.resonantStories || []).map((s) => `<li>${s}</li>`).join("");
+      const personaItems = Object.entries(state.personaMessaging || {}).map(([k, v]) => `<li><strong>${k.toUpperCase()}:</strong> ${v}</li>`).join("");
+      const sources = (brief.sources || []).map((s) => `<a href="${s.url}" target="_blank" rel="noopener noreferrer">${s.label}</a>`).join("");
+      return `
+        <h3 class="brief-title">Company Brief: ${brief.company}</h3>
+        <div class="brief-grid">
+          <article class="brief-card">
+            <h4>Priorities</h4>
+            <ul>${priorities || "<li>No priorities extracted yet.</li>"}</ul>
+          </article>
+          <article class="brief-card">
+            <h4>Persona talk tracks</h4>
+            <ul>${personaItems || "<li>No persona guidance yet.</li>"}</ul>
+          </article>
+          <article class="brief-card">
+            <h4>Resonant customer story angles</h4>
+            <ul>${stories || "<li>No story angles extracted yet.</li>"}</ul>
+          </article>
+        </div>
+        <div class="brief-card" style="margin-top:10px;">
+          <h4>Sources</h4>
+          <div class="sources-list">${sources || "<span style='color:var(--muted);font-size:12px;'>No sources available.</span>"}</div>
+        </div>
+      `;
+    }
+
+    function renderResearchTab() {
+      els.controls.style.display = "none";
+      els.board.innerHTML = `
+        <section class="brief-panel">
+          ${getCompanyBriefHtml()}
+        </section>
+      `;
+    }
+
+    function formatMoney(v) {
+      const n = Math.max(0, Number(v) || 0);
+      if (n >= 1e9) return `$${(n / 1e9).toFixed(1).replace(/\.0$/, "")}B`;
+      if (n >= 1e6) return `$${(n / 1e6).toFixed(1).replace(/\.0$/, "")}M`;
+      if (n >= 1e3) return `$${Math.round(n / 1e3)}K`;
+      return `$${Math.round(n)}`;
+    }
+
+    function computeRoiValues() {
+      const engineers = Math.max(0, Number(state.roiEngineers) || 0);
+      const salaryK = Math.max(0, Number(state.roiSalaryK) || 0);
+      const velocity = Math.max(0, Number(state.roiVelocityPct) || 0);
+      const grossGain = engineers * salaryK * 1000 * (velocity / 100);
+      const annualCost = engineers * 40 * 12;
+      const netGain = Math.max(0, grossGain - annualCost);
+      const payback = grossGain > 0 ? Math.max(0, Math.round(annualCost / (grossGain / 365))) : 0;
+      return { netGain, annualCost, payback };
+    }
+
+    function renderRoiTab() {
+      els.controls.style.display = "none";
+      const { netGain, annualCost, payback } = computeRoiValues();
+      els.board.innerHTML = `
+        <section class="roi-wrap">
+          <div class="roi-grid">
+            <div class="roi-field">
+              <label>Engineers</label>
+              <input id="roiEngineers" type="number" min="0" value="${state.roiEngineers}" />
+            </div>
+            <div class="roi-field">
+              <label>Avg salary ($K/yr)</label>
+              <input id="roiSalaryK" type="number" min="0" value="${state.roiSalaryK}" />
+            </div>
+            <div class="roi-field">
+              <label>Velocity gain (%)</label>
+              <input id="roiVelocity" type="number" min="0" value="${state.roiVelocityPct}" />
+            </div>
+          </div>
+          <div class="roi-results">
+            <article class="roi-card"><h4>Annual productivity gain</h4><p>${formatMoney(netGain)}</p></article>
+            <article class="roi-card"><h4>Estimated annual cost</h4><p>${formatMoney(annualCost)}</p></article>
+            <article class="roi-card"><h4>Estimated payback</h4><p>~${payback} days</p></article>
+          </div>
+          <div class="guidance-empty">Formula: engineers × salary × 1000 × (velocity/100) − (engineers × 40 × 12)</div>
+        </section>
+      `;
+      const e = document.getElementById("roiEngineers");
+      const s = document.getElementById("roiSalaryK");
+      const v = document.getElementById("roiVelocity");
+      [e, s, v].forEach((input) => {
+        input.addEventListener("input", () => {
+          state.roiEngineers = Math.max(0, Number(e.value) || 0);
+          state.roiSalaryK = Math.max(0, Number(s.value) || 0);
+          state.roiVelocityPct = Math.max(0, Number(v.value) || 0);
+          render();
+        });
+      });
+    }
+
+    async function fetchJsonWithFallback(url, timeoutMs = 7000) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const res = await fetch(url, { signal: controller.signal });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+      } finally {
+        clearTimeout(timer);
+      }
+    }
+
+    function inferPriorityBuckets(textBlob) {
+      const blob = (textBlob || "").toLowerCase();
+      const priorities = [];
+      if (/(security|breach|cyber|risk|compliance|privacy)/.test(blob)) priorities.push("Security and compliance resilience");
+      if (/(growth|revenue|margin|profit|cost|efficiency)/.test(blob)) priorities.push("Growth with cost efficiency");
+      if (/(platform|infrastructure|cloud|modernization|legacy)/.test(blob)) priorities.push("Platform modernization and scale");
+      if (/(customer|experience|quality|reliability|incident)/.test(blob)) priorities.push("Customer experience and reliability");
+      if (/(talent|hiring|productivity|engineering)/.test(blob)) priorities.push("Engineering leverage and talent velocity");
+      return priorities.slice(0, 3);
+    }
+
+    function buildPersonaMessaging(context) {
+      const priorities = context.priorities && context.priorities.length ? context.priorities.join("; ") : "faster software delivery with lower risk";
+      return {
+        dev: `Emphasize how Cursor reduces mechanical work on ${context.company}'s priorities: ${priorities}.`,
+        cto: `Frame this as leverage: accelerate roadmap execution while improving engineering consistency around ${priorities}.`,
+        ciso: `Anchor on controls and auditability, connecting Cursor safeguards to ${context.company}'s risk posture.`,
+        cfo: `Lead with efficiency and payback tied to ${priorities}, then show controlled rollout economics.`,
+        cpo: `Position this as a roadmap accelerator that boosts shipping velocity without proportional hiring.`
+      };
+    }
+
+    function buildTailoredCards(context) {
+      const hook = context.company ? `${context.company}-specific` : "company-specific";
+      const topPriority = context.priorities && context.priorities[0] ? context.priorities[0] : "engineering velocity";
+      const outcomesById = {};
+      baseOutcomes.forEach((out) => {
+        outcomesById[out.id] = {
+          sub: out.sub,
+          detail: `${out.detail} For ${context.company}, position this outcome against ${topPriority.toLowerCase()} and current transformation goals.`,
+          cs: context.resonantStories && context.resonantStories.length
+            ? `${context.resonantStories[0]} Pair this with ROI framing relevant to ${context.company}'s operating model.`
+            : out.cs
+        };
+      });
+      const capabilitiesById = {};
+      baseCapabilities.forEach((cap) => {
+        capabilitiesById[cap.id] = {
+          sub: cap.sub,
+          detail: `${cap.detail} In ${context.company}'s context, emphasize measurable impact tied to ${topPriority.toLowerCase()}.`
+        };
+      });
+      return { outcomesById, capabilitiesById };
+    }
+
+    async function runCompanyResearch() {
+      if (!state.companyQuery.trim()) {
+        state.researchError = "Enter a company name to research.";
+        render();
+        return;
+      }
+      state.isResearching = true;
+      state.researchError = "";
+      render();
+
+      const query = state.companyQuery.trim();
+      const sources = [];
+      let summaryText = "";
+      let secText = "";
+
+      try {
+        const wikiSearch = await fetchJsonWithFallback(`https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=1&namespace=0&format=json&origin=*`);
+        const pageTitle = wikiSearch && wikiSearch[1] && wikiSearch[1][0];
+        if (pageTitle) {
+          const wikiSummary = await fetchJsonWithFallback(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pageTitle)}`);
+          summaryText = wikiSummary.extract || "";
+          sources.push({ label: `Wikipedia: ${pageTitle}`, url: wikiSummary.content_urls && wikiSummary.content_urls.desktop ? wikiSummary.content_urls.desktop.page : `https://en.wikipedia.org/wiki/${encodeURIComponent(pageTitle)}` });
+        }
+      } catch (_) {}
+
+      try {
+        const secAtomUrl = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=${encodeURIComponent(query)}&type=10-k&owner=exclude&count=1&output=atom`;
+        const secProxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(secAtomUrl)}`;
+        const secRes = await fetch(secProxy);
+        if (secRes.ok) {
+          secText = await secRes.text();
+          sources.push({ label: "SEC filing index (10-K search)", url: secAtomUrl });
+        }
+      } catch (_) {}
+
+      try {
+        const duck = await fetchJsonWithFallback(`https://api.duckduckgo.com/?q=${encodeURIComponent(query + " annual report engineering transformation")}&format=json&no_redirect=1&no_html=1`);
+        const abstract = duck && duck.AbstractText ? duck.AbstractText : "";
+        if (abstract) {
+          summaryText = `${summaryText} ${abstract}`.trim();
+          if (duck.AbstractURL) sources.push({ label: "DuckDuckGo abstract source", url: duck.AbstractURL });
+        }
+      } catch (_) {}
+
+      const blob = `${summaryText}\n${secText}\n${state.industry}`;
+      const priorities = inferPriorityBuckets(blob);
+      const context = {
+        company: query,
+        priorities: priorities.length ? priorities : ["Engineering leverage and execution speed", "Risk-aware software delivery", "Operational efficiency in delivery"],
+        resonantStories: [
+          `${query}: map to peers that improved engineering output while maintaining governance.`,
+          `${query}: emphasize quick-start pilot with measurable velocity and quality deltas.`,
+          `${query}: align rollout with leadership goals and compliance posture.`
+        ],
+        sources
+      };
+
+      state.researchContext = context;
+      state.personaMessaging = buildPersonaMessaging(context);
+      state.tailoredCards = buildTailoredCards(context);
+      state.isResearching = false;
+      state.researchError = "";
+      render();
+    }
+
+    function bindCardActions() {
+      document.querySelectorAll(".card-selectable").forEach((card) => {
+        card.addEventListener("click", (event) => {
+          if (event.target.closest(".info-btn") || event.target.closest(".cs-btn")) return;
+          const type = card.getAttribute("data-select-type");
+          const id = card.getAttribute("data-id");
+          if (state.mode === "dev" && type === "capability") {
+            state.selectedCapabilityId = state.selectedCapabilityId === id ? null : id;
+            state.selectedOutcomeIds = [];
+          } else if (type === "outcome") {
+            state.selectedOutcomeIds = toggleInArray(state.selectedOutcomeIds, id);
+            const infoKey = `outcome:${id}`;
+            const isNowSelected = state.selectedOutcomeIds.includes(id);
+            if (isNowSelected) {
+              if (!state.openInfoIds.includes(infoKey)) state.openInfoIds = [...state.openInfoIds, infoKey];
+              if (!state.openCsIds.includes(id)) state.openCsIds = [...state.openCsIds, id];
+            } else {
+              state.openInfoIds = state.openInfoIds.filter((x) => x !== infoKey);
+              state.openCsIds = state.openCsIds.filter((x) => x !== id);
+            }
+            state.selectedCapabilityId = null;
+          }
+          render();
+        });
+      });
+
+      document.querySelectorAll("[data-info]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-info");
+          state.openInfoIds = toggleInArray(state.openInfoIds, id);
+          render();
+        });
+      });
+
+      document.querySelectorAll("[data-cs]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-cs");
+          state.openCsIds = toggleInArray(state.openCsIds, id);
+          render();
+        });
+      });
+    }
+
+    function render() {
+      const currentCapabilities = getCapabilities();
+      const currentOutcomes = getOutcomes();
+      els.tabs.forEach((tab) => {
+        tab.classList.toggle("active", tab.dataset.mode === state.mode);
+      });
+      els.industrySelect.value = state.industry;
+      els.companyInput.value = state.companyQuery;
+      els.applyRewriteChk.checked = state.applyRewrite;
+      if (state.isResearching) {
+        els.researchStatus.textContent = "Researching company context...";
+      } else if (state.researchError) {
+        els.researchStatus.textContent = state.researchError;
+      } else if (state.researchContext && state.researchContext.company) {
+        els.researchStatus.textContent = `Research ready for ${state.researchContext.company}.`;
+      } else {
+        els.researchStatus.textContent = "";
+      }
+
+      if (state.mode === "research") {
+        renderResearchTab();
+        writeHash();
+        return;
+      }
+
+      if (state.mode === "roi") {
+        renderRoiTab();
+        writeHash();
+        return;
+      }
+
+      if (state.mode === "guidance") {
+        renderGuidance();
+        writeHash();
+        return;
+      }
+
+      els.controls.style.display = state.mode === "exec" ? "flex" : "none";
+      els.board.innerHTML = `
+        <section class="column">
+          <h2 id="leftTitle"></h2>
+          <div id="leftCards" class="cards"></div>
+        </section>
+        <div class="flow-arrow">→</div>
+        <section class="column">
+          <h2 id="rightTitle"></h2>
+          <div id="rightCards" class="cards"></div>
+        </section>
+      `;
+      els.leftTitle = document.getElementById("leftTitle");
+      els.rightTitle = document.getElementById("rightTitle");
+      els.leftCards = document.getElementById("leftCards");
+      els.rightCards = document.getElementById("rightCards");
+
+      if (state.mode === "exec") {
+        els.personaFilters.classList.add("show");
+      } else {
+        els.personaFilters.classList.remove("show");
+      }
+      els.personaInputs.forEach((input) => {
+        input.checked = state.executivePersonas.includes(input.value);
+      });
+
+      if (state.mode === "dev") {
+        els.leftTitle.textContent = "Cursor Capabilities";
+        els.rightTitle.textContent = "Business Outcomes";
+        els.leftCards.innerHTML = renderCards(currentCapabilities, "capability");
+        els.rightCards.innerHTML = renderCards(currentOutcomes, "outcome");
+      } else {
+        const execOutcomes = visibleExecutiveOutcomes();
+        state.selectedOutcomeIds = state.selectedOutcomeIds.filter((id) => execOutcomes.some((o) => o.id === id));
+        els.leftTitle.textContent = "Business Outcomes";
+        els.rightTitle.textContent = "Cursor Capabilities";
+        els.leftCards.innerHTML = renderCards(execOutcomes, "outcome");
+        els.rightCards.innerHTML = renderCards(currentCapabilities, "capability");
+      }
+
+      bindCardActions();
+      writeHash();
+    }
+
+    els.tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const mode = tab.dataset.mode;
+        if (mode === state.mode) return;
+        state.mode = mode;
+        state.selectedCapabilityId = null;
+        state.selectedOutcomeIds = [];
+        state.selectedUseCaseId = null;
+        state.openInfoIds = [];
+        state.openCsIds = [];
+        render();
+      });
+    });
+
+    els.industrySelect.addEventListener("change", (e) => {
+      state.industry = e.target.value;
+      render();
+    });
+
+    els.companyInput.addEventListener("input", (e) => {
+      state.companyQuery = e.target.value;
+      writeHash();
+    });
+
+    els.researchBtn.addEventListener("click", () => {
+      runCompanyResearch();
+    });
+
+    els.applyRewriteChk.addEventListener("change", (e) => {
+      if (e.target.checked) {
+        if (!state.tailoredCards) {
+          state.researchError = "Run research first to enable Apply.";
+          state.applyRewrite = false;
+        } else {
+          state.applyRewrite = true;
+          state.researchError = "";
+        }
+      } else {
+        state.applyRewrite = false;
+      }
+      render();
+    });
+
+    els.personaInputs.forEach((input) => {
+      input.addEventListener("change", () => {
+        state.executivePersonas = els.personaInputs.filter((x) => x.checked).map((x) => x.value);
+        render();
+      });
+    });
+
+    els.copyBtn.addEventListener("click", async () => {
+      const old = els.copyBtn.textContent;
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        els.copyBtn.textContent = "Copied";
+      } catch (_) {
+        els.copyBtn.textContent = "Copy failed";
+      }
+      setTimeout(() => { els.copyBtn.textContent = old; }, 1000);
+    });
+
+    window.addEventListener("hashchange", () => {
+      state.selectedCapabilityId = null;
+      state.selectedOutcomeIds = [];
+      state.selectedUseCaseId = null;
+      parseHash();
+      render();
+    });
+
+    parseHash();
+    render();
+  </script>
+</body>
+</html>

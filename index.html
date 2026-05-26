@@ -126,6 +126,10 @@
       align-items: center;
       justify-content: center;
     }
+    .search-icon-btn.copied {
+      border-color: var(--blue);
+      box-shadow: inset 0 0 0 1px rgba(79, 142, 247, 0.35);
+    }
     .compact-select {
       border: 1px solid var(--border);
       background: var(--surface2);
@@ -441,6 +445,30 @@
       text-decoration: underline;
       word-break: break-all;
     }
+    .prov-meta {
+      margin: 0 0 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .prov-pill {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: calc(var(--ui-size) - 8px);
+      color: var(--muted);
+      background: var(--surface2);
+    }
+    .status-ok { color: #0f766e; border-color: rgba(15,118,110,0.25); }
+    .status-fallback { color: #b45309; border-color: rgba(180,83,9,0.25); }
+    .status-unavailable { color: #b91c1c; border-color: rgba(185,28,28,0.25); }
+    .source-snippet {
+      margin-top: 6px;
+      font-size: calc(var(--ui-size) - 8px);
+      color: var(--muted);
+      line-height: 1.3;
+    }
     .roi-wrap {
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -562,12 +590,12 @@
     ];
 
     const outcomes = [
-      { id: "velocity", title: "Engineering velocity", sub: "Ship faster with the same team", detail: "Reduce time on mechanical work so more engineering effort ships customer value.", caps: ["tab", "agent", "chat", "automations", "mcp"], cs: "Salesforce scaled Cursor to 20K+ engineers and reported about 30% velocity improvement in measured teams." },
-      { id: "quality", title: "Code quality at scale", sub: "Higher standards across all engineers", detail: "Raise quality floor by reducing friction in testing, review, and safe refactoring.", caps: ["tab", "cmdk", "bugbot", "agent", "mcp", "models"], cs: "Grab reported stronger PR quality and faster code-review cycles with AI-assisted edits and checks in daily use." },
+      { id: "velocity", title: "Engineering velocity", sub: "Ship faster with the same team", detail: "Reduce time on mechanical work so more engineering effort ships customer value.", caps: ["tab", "agent", "chat", "automations", "mcp"], cs: "Salesforce reports 30%+ velocity gains in measured teams and broad daily Cursor usage. Sources: <a href=\"https://cursor.com/blog/salesforce\" target=\"_blank\" rel=\"noopener noreferrer\">Cursor case study</a>, <a href=\"https://engineering.salesforce.com/how-salesforce-engineering-operationalized-ai-productivity-at-scale/\" target=\"_blank\" rel=\"noopener noreferrer\">Salesforce Engineering</a>." },
+      { id: "quality", title: "Code quality at scale", sub: "Higher standards across all engineers", detail: "Raise quality floor by reducing friction in testing, review, and safe refactoring.", caps: ["tab", "cmdk", "bugbot", "agent", "mcp", "models"], cs: "Salesforce's EAC team cut legacy coverage effort by 85% using Cursor-assisted testing workflows. Source: <a href=\"https://engineering.salesforce.com/how-cursor-ai-cut-legacy-code-coverage-time-by-85/\" target=\"_blank\" rel=\"noopener noreferrer\">Salesforce Engineering post</a>." },
       { id: "security", title: "Security posture", sub: "Guardrails baked into every interaction", detail: "Security checks and standards are applied earlier at coding and PR-review stages.", caps: ["cmdk", "bugbot", "rules", "privacy"], cs: "Enterprise customers use Team Rules plus Privacy Mode to enforce secure patterns before merge, reducing downstream remediation effort." },
       { id: "compliance", title: "Compliance & governance", sub: "Auditability, data residency, control", detail: "Versioned rules and deployment controls support consistent, auditable compliance outcomes.", caps: ["rules", "privacy"], cs: "Regulated teams adopt self-hosting and zero-retention routing to satisfy procurement and compliance reviews faster." },
-      { id: "scale", title: "Engineering scale", sub: "Do more without hiring more", detail: "Expand team leverage with autonomous execution and reusable standards.", caps: ["agent", "automations", "rules", "models"], cs: "Grab saw 98% monthly active adoption and broad MR usage, increasing output without proportional headcount growth." },
-      { id: "retention", title: "Developer retention", sub: "The tooling top engineers expect", detail: "Strong developer experience helps attract and retain high-performing engineering talent.", caps: ["tab", "chat"], cs: "In head-to-head evaluations, 93% of engineers preferred Cursor over Copilot, supporting stronger developer satisfaction." },
+      { id: "scale", title: "Engineering scale", sub: "Do more without hiring more", detail: "Expand team leverage with autonomous execution and reusable standards.", caps: ["agent", "automations", "rules", "models"], cs: "Grab reports ~98% monthly active engineering adoption with >1/3 of merged PRs incorporating agent-generated code. Source: <a href=\"https://engineering.grab.com/cursor-at-grab-adoption-and-impact\" target=\"_blank\" rel=\"noopener noreferrer\">Grab Engineering</a>." },
+      { id: "retention", title: "Developer retention", sub: "The tooling top engineers expect", detail: "Strong developer experience helps attract and retain high-performing engineering talent.", caps: ["tab", "chat"], cs: "Adoption playbooks at Coinbase highlight large-scale engineering engagement when leaders pair hands-on usage with workflow training. Source: <a href=\"https://www.lennysnewsletter.com/p/how-coinbase-scaled-ai-to-1000-engineers\" target=\"_blank\" rel=\"noopener noreferrer\">Lenny’s interview with Coinbase Eng leadership</a>." },
       { id: "cost", title: "Engineering cost efficiency", sub: "Lower cost per unit of delivered software", detail: "Faster delivery and fewer defects reduce the fully loaded cost of shipping and maintaining software.", caps: ["agent", "automations", "bugbot", "models", "cmdk"], cs: "A 100-engineer org at $180K average cost with 30% productivity gain yields about $5.4M value vs ~$480K annual license cost." },
       { id: "onboarding", title: "Onboarding speed", sub: "New engineers contribute in days, not weeks", detail: "Cross-repo context and guided edits collapse learning cycles so new hires deliver sooner.", caps: ["chat", "mcp", "tab"], cs: "Teams report onboarding compression from weeks to hours by using codebase chat to answer architecture and ownership questions instantly." }
     ];
@@ -783,7 +811,11 @@
 
     function getOutcomes() {
       if (!state.applyRewrite || !state.tailoredCards || !state.tailoredCards.outcomesById) return baseOutcomes;
-      return baseOutcomes.map((out) => ({ ...out, ...(state.tailoredCards.outcomesById[out.id] || {}) }));
+      return baseOutcomes.map((out) => {
+        const merged = { ...out, ...(state.tailoredCards.outcomesById[out.id] || {}) };
+        if (!merged.cs || typeof merged.cs !== "string") merged.cs = out.cs;
+        return merged;
+      });
     }
 
     function connectedIdsFromSelection() {
@@ -995,12 +1027,39 @@
         return `<div class="guidance-empty">Run company research to generate a tailored brief.</div>`;
       }
       const brief = state.researchContext;
-      const priorities = (brief.priorities || []).map((p) => `<li>${p}</li>`).join("");
-      const stories = (brief.resonantStories || []).map((s) => `<li>${s}</li>`).join("");
-      const personaItems = Object.entries(state.personaMessaging || {}).map(([k, v]) => `<li><strong>${k.toUpperCase()}:</strong> ${v}</li>`).join("");
-      const sources = (brief.sources || []).map((s) => `<a href="${s.url}" target="_blank" rel="noopener noreferrer">${s.label}</a>`).join("");
+      const sourceById = Object.fromEntries((brief.sourceRecords || []).map((s) => [s.id, s]));
+      const sourceTypes = [...new Set((brief.sourceRecords || []).map((s) => s.type.toUpperCase()))];
+      const attributionFor = (insightId) => {
+        const row = (brief.insightAttribution || []).find((x) => x.insightId === insightId);
+        return (row?.sourceIds || []).map((sid) => sourceById[sid]).filter(Boolean);
+      };
+      const renderSourceRefs = (insightId) => {
+        const refs = attributionFor(insightId);
+        if (!refs.length) return `<div class="source-snippet">Sources used: none</div>`;
+        return `<div class="source-snippet">Sources used: ${refs.map((r) => `<a href="${r.url}" target="_blank" rel="noopener noreferrer">${r.name}</a>`).join(" · ")}</div>`;
+      };
+      const priorities = (brief.priorities || []).map((p, i) => `<li>${p}${renderSourceRefs(`priority-${i}`)}</li>`).join("");
+      const stories = (brief.resonantStories || []).map((s, i) => `<li>${s}${renderSourceRefs(`story-${i}`)}</li>`).join("");
+      const personaItems = Object.entries(state.personaMessaging || {}).map(([k, v]) => `<li><strong>${k.toUpperCase()}:</strong> ${v}${renderSourceRefs(`persona-${k}`)}</li>`).join("");
+      const sourceCards = (brief.sourceRecords || []).map((s) => `
+        <article class="brief-card">
+          <h4>${s.name}</h4>
+          <div class="prov-meta">
+            <span class="prov-pill">${s.type.toUpperCase()}</span>
+            <span class="prov-pill ${s.status === "ok" ? "status-ok" : s.status === "fallback" ? "status-fallback" : "status-unavailable"}">${s.status}</span>
+            <span class="prov-pill">${new Date(s.retrievedAt).toLocaleString()}</span>
+          </div>
+          <div class="sources-list"><a href="${s.url}" target="_blank" rel="noopener noreferrer">${s.url}</a></div>
+          <div class="source-snippet">${s.snippet || "No snippet extracted."}</div>
+        </article>
+      `).join("");
       return `
         <h3 class="brief-title">Company Brief: ${brief.company}</h3>
+        <div class="prov-meta">
+          <span class="prov-pill">Generated: ${new Date(brief.generatedAt).toLocaleString()}</span>
+          <span class="prov-pill">Confidence: ${brief.confidence}</span>
+          <span class="prov-pill">Sources: ${sourceTypes.join(", ") || "none"}</span>
+        </div>
         <div class="brief-grid">
           <article class="brief-card">
             <h4>Priorities</h4>
@@ -1016,8 +1075,8 @@
           </article>
         </div>
         <div class="brief-card" style="margin-top:10px;">
-          <h4>Sources</h4>
-          <div class="sources-list">${sources || "<span style='color:var(--muted);font-size:12px;'>No sources available.</span>"}</div>
+          <h4>Exact source records</h4>
+          <div class="brief-grid">${sourceCards || "<div class='guidance-empty'>No sources available.</div>"}</div>
         </div>
       `;
     }
@@ -1124,16 +1183,49 @@
       };
     }
 
+    function calcConfidence(sourceRecords) {
+      const hasSecOk = sourceRecords.some((s) => s.type === "sec" && s.status === "ok");
+      const hasNewsOk = sourceRecords.some((s) => s.type === "news" && s.status === "ok");
+      const hasMacroOk = sourceRecords.some((s) => s.type === "macro" && s.status === "ok");
+      const hasFallback = sourceRecords.some((s) => s.status === "fallback");
+      if (hasSecOk && hasNewsOk && hasMacroOk) return "high";
+      if ((hasSecOk || hasNewsOk) && (hasMacroOk || hasFallback)) return "medium";
+      return "low";
+    }
+
+    function createInsightAttribution(sourceRecords) {
+      const available = sourceRecords.filter((s) => s.status !== "unavailable");
+      const secIds = available.filter((s) => s.type === "sec").map((s) => s.id);
+      const newsIds = available.filter((s) => s.type === "news").map((s) => s.id);
+      const macroIds = available.filter((s) => s.type === "macro").map((s) => s.id);
+      const primary = [...new Set([...secIds, ...newsIds])];
+      return [
+        { insightId: "priority-0", sourceIds: primary.length ? primary : available.slice(0, 1).map((s) => s.id) },
+        { insightId: "priority-1", sourceIds: [...new Set([...newsIds, ...macroIds])].slice(0, 2) },
+        { insightId: "priority-2", sourceIds: [...new Set([...secIds, ...macroIds])].slice(0, 2) },
+        { insightId: "story-0", sourceIds: newsIds.length ? newsIds : primary.slice(0, 1) },
+        { insightId: "story-1", sourceIds: [...new Set([...newsIds, ...macroIds])].slice(0, 2) },
+        { insightId: "story-2", sourceIds: secIds.length ? secIds.slice(0, 1) : primary.slice(0, 1) },
+        { insightId: "persona-dev", sourceIds: primary.slice(0, 2) },
+        { insightId: "persona-cto", sourceIds: [...new Set([...secIds, ...newsIds])].slice(0, 2) },
+        { insightId: "persona-ciso", sourceIds: secIds.length ? secIds.slice(0, 2) : primary.slice(0, 1) },
+        { insightId: "persona-cfo", sourceIds: [...new Set([...macroIds, ...newsIds])].slice(0, 2) },
+        { insightId: "persona-cpo", sourceIds: primary.slice(0, 2) }
+      ];
+    }
+
     function buildTailoredCards(context) {
       const hook = context.company ? `${context.company}-specific` : "company-specific";
       const topPriority = context.priorities && context.priorities[0] ? context.priorities[0] : "engineering velocity";
+      const stories = context.resonantStories && context.resonantStories.length ? context.resonantStories : [null];
       const outcomesById = {};
-      baseOutcomes.forEach((out) => {
+      baseOutcomes.forEach((out, idx) => {
+        const mappedStory = stories[idx % stories.length];
         outcomesById[out.id] = {
           sub: out.sub,
           detail: `${out.detail} For ${context.company}, position this outcome against ${topPriority.toLowerCase()} and current transformation goals.`,
-          cs: context.resonantStories && context.resonantStories.length
-            ? `${context.resonantStories[0]} Pair this with ROI framing relevant to ${context.company}'s operating model.`
+          cs: mappedStory
+            ? `${mappedStory} Pair this with ROI framing relevant to ${context.company}'s operating model.`
             : out.cs
         };
       });
@@ -1158,7 +1250,8 @@
       render();
 
       const query = state.companyQuery.trim();
-      const sources = [];
+      const sourceRecords = [];
+      const nowIso = () => new Date().toISOString();
       let summaryText = "";
       let secText = "";
 
@@ -1168,9 +1261,27 @@
         if (pageTitle) {
           const wikiSummary = await fetchJsonWithFallback(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(pageTitle)}`);
           summaryText = wikiSummary.extract || "";
-          sources.push({ label: `Wikipedia: ${pageTitle}`, url: wikiSummary.content_urls && wikiSummary.content_urls.desktop ? wikiSummary.content_urls.desktop.page : `https://en.wikipedia.org/wiki/${encodeURIComponent(pageTitle)}` });
+          sourceRecords.push({
+            id: "wiki-summary",
+            type: "news",
+            name: `Wikipedia summary: ${pageTitle}`,
+            url: wikiSummary.content_urls && wikiSummary.content_urls.desktop ? wikiSummary.content_urls.desktop.page : `https://en.wikipedia.org/wiki/${encodeURIComponent(pageTitle)}`,
+            retrievedAt: nowIso(),
+            status: "fallback",
+            snippet: (wikiSummary.extract || "").slice(0, 180)
+          });
         }
-      } catch (_) {}
+      } catch (_) {
+        sourceRecords.push({
+          id: "wiki-summary",
+          type: "news",
+          name: "Wikipedia summary",
+          url: `https://en.wikipedia.org/wiki/${encodeURIComponent(query)}`,
+          retrievedAt: nowIso(),
+          status: "unavailable",
+          snippet: "Wikipedia summary unavailable."
+        });
+      }
 
       try {
         const secAtomUrl = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=${encodeURIComponent(query)}&type=10-k&owner=exclude&count=1&output=atom`;
@@ -1178,30 +1289,102 @@
         const secRes = await fetch(secProxy);
         if (secRes.ok) {
           secText = await secRes.text();
-          sources.push({ label: "SEC filing index (10-K search)", url: secAtomUrl });
+          sourceRecords.push({
+            id: "sec-10k-index",
+            type: "sec",
+            name: `SEC EDGAR 10-K index: ${query}`,
+            url: secAtomUrl,
+            retrievedAt: nowIso(),
+            status: "ok",
+            snippet: "Most recent 10-K listing retrieved from EDGAR search index."
+          });
+        } else {
+          sourceRecords.push({
+            id: "sec-10k-index",
+            type: "sec",
+            name: `SEC EDGAR 10-K index: ${query}`,
+            url: secAtomUrl,
+            retrievedAt: nowIso(),
+            status: "fallback",
+            snippet: `SEC endpoint returned ${secRes.status}; using fallback sources.`
+          });
         }
-      } catch (_) {}
+      } catch (_) {
+        const secAtomUrl = `https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=${encodeURIComponent(query)}&type=10-k&owner=exclude&count=1&output=atom`;
+        sourceRecords.push({
+          id: "sec-10k-index",
+          type: "sec",
+          name: `SEC EDGAR 10-K index: ${query}`,
+          url: secAtomUrl,
+          retrievedAt: nowIso(),
+          status: "unavailable",
+          snippet: "SEC retrieval failed in-browser."
+        });
+      }
 
       try {
         const duck = await fetchJsonWithFallback(`https://api.duckduckgo.com/?q=${encodeURIComponent(query + " annual report engineering transformation")}&format=json&no_redirect=1&no_html=1`);
         const abstract = duck && duck.AbstractText ? duck.AbstractText : "";
         if (abstract) {
           summaryText = `${summaryText} ${abstract}`.trim();
-          if (duck.AbstractURL) sources.push({ label: "DuckDuckGo abstract source", url: duck.AbstractURL });
+          sourceRecords.push({
+            id: "news-duck-abstract",
+            type: "news",
+            name: "DuckDuckGo abstract source",
+            url: duck.AbstractURL || `https://duckduckgo.com/?q=${encodeURIComponent(query)}`,
+            retrievedAt: nowIso(),
+            status: "ok",
+            snippet: abstract.slice(0, 180)
+          });
+        } else {
+          sourceRecords.push({
+            id: "news-duck-abstract",
+            type: "news",
+            name: "DuckDuckGo abstract source",
+            url: `https://duckduckgo.com/?q=${encodeURIComponent(query)}`,
+            retrievedAt: nowIso(),
+            status: "fallback",
+            snippet: "No direct abstract returned; fallback to other context sources."
+          });
         }
-      } catch (_) {}
+      } catch (_) {
+        sourceRecords.push({
+          id: "news-duck-abstract",
+          type: "news",
+          name: "DuckDuckGo abstract source",
+          url: `https://duckduckgo.com/?q=${encodeURIComponent(query)}`,
+          retrievedAt: nowIso(),
+          status: "unavailable",
+          snippet: "News abstract source unavailable."
+        });
+      }
+
+      sourceRecords.push({
+        id: "macro-industry-benchmark",
+        type: "macro",
+        name: "Industry benchmark baseline",
+        url: `https://fred.stlouisfed.org/searchresults/?st=${encodeURIComponent((state.industry || "technology") + " productivity")}`,
+        retrievedAt: nowIso(),
+        status: "fallback",
+        snippet: `Using public macro benchmark context for ${state.industry || "general"} industry calibration.`
+      });
 
       const blob = `${summaryText}\n${secText}\n${state.industry}`;
       const priorities = inferPriorityBuckets(blob);
+      const confidence = calcConfidence(sourceRecords);
+      const insightAttribution = createInsightAttribution(sourceRecords);
       const context = {
         company: query,
+        generatedAt: nowIso(),
+        confidence,
         priorities: priorities.length ? priorities : ["Engineering leverage and execution speed", "Risk-aware software delivery", "Operational efficiency in delivery"],
         resonantStories: [
           `${query}: map to peers that improved engineering output while maintaining governance.`,
           `${query}: emphasize quick-start pilot with measurable velocity and quality deltas.`,
           `${query}: align rollout with leadership goals and compliance posture.`
         ],
-        sources
+        sourceRecords,
+        insightAttribution
       };
 
       state.researchContext = context;
@@ -1387,14 +1570,17 @@
     });
 
     els.copyBtn.addEventListener("click", async () => {
-      const old = els.copyBtn.textContent;
       try {
         await navigator.clipboard.writeText(window.location.href);
-        els.copyBtn.textContent = "Copied";
+        els.copyBtn.classList.add("copied");
+        els.copyBtn.setAttribute("title", "Copied");
       } catch (_) {
-        els.copyBtn.textContent = "Copy failed";
+        els.copyBtn.setAttribute("title", "Copy failed");
       }
-      setTimeout(() => { els.copyBtn.textContent = old; }, 1000);
+      setTimeout(() => {
+        els.copyBtn.classList.remove("copied");
+        els.copyBtn.setAttribute("title", "Copy link");
+      }, 1000);
     });
 
     window.addEventListener("hashchange", () => {

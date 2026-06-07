@@ -1,0 +1,56 @@
+---
+description: Convert Granola meeting notes into a structured feature spec or GitHub issue
+globs: []
+alwaysApply: false
+---
+
+# Granola Meeting Notes → Feature Spec
+
+Use this skill when I paste raw meeting notes (from Granola or any source) and
+ask you to extract actionable product or engineering requirements.
+
+## What to extract
+
+1. **Customer pain points** — quote directly where possible, preserve the
+   customer's language. Don't sanitize or genericize.
+
+2. **Feature requests** — with priority signal from the conversation:
+   - 🔴 Blocker / "we can't move forward without this"
+   - 🟡 Important / "this is on our roadmap ask"
+   - 🟢 Nice to have / "it would be great if"
+
+3. **Competitive mentions** — any tools, vendors, or alternatives named.
+   Note sentiment: threat, comparison, or replacement candidate.
+
+4. **Follow-up actions** — format as:
+   - [ ] Action item — Owner — Due date (if mentioned)
+
+## Output format
+
+Return a markdown document structured for copy-paste into a GitHub issue
+or Notion page. Use these exact headers:
+
+## Customer Context
+## Pain Points
+## Feature Requests
+## Competitive Intel
+## Follow-Up Actions
+## Suggested Priority
+
+## Example triggers
+
+"Here are my notes from [customer name] — run the Granola skill"
+"Clean up these Granola notes into a spec"
+"Extract action items and feature requests from this call"
+
+## Real example: how this skill improved the Value Cards app
+
+During a prospect call, Granola captured a CISO repeatedly returning to
+whether Cursor ever transmits code snippets externally. Running this skill
+surfaced that as a 🔴 blocker. It became the CISO persona card in Executive
+mode — Privacy & Security as the headline capability, with SOC 2, zero
+retention, and self-hosted deployment as the three proof points.
+
+The feedback loop: customer call → Granola → this skill → new card in
+index.html within the same day. That's the Product Whisperer Loop running
+inside Cursor itself.

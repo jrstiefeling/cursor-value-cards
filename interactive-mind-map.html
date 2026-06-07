@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cursor Field Engineering Strategy - Interactive Mind Map</title>
+  <style>
+    :root {
+      --bg: #060910;
+      --bg-grid: rgba(128, 178, 255, 0.08);
+      --link: #77b6ff;
+      --node-main: #dce9ff;
+      --node-main-text: #0d1a30;
+      --node-sub: #b9f0eb;
+      --node-sub-text: #0a2020;
+      --node-shadow: rgba(63, 146, 255, 0.22);
+      --panel-bg: rgba(8, 16, 30, 0.88);
+      --panel-border: rgba(137, 188, 255, 0.35);
+      --panel-text: #d4e8ff;
+      --accent: #82d1ff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #e9f3ff;
+      background:
+        linear-gradient(var(--bg-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px),
+        radial-gradient(circle at 22% 20%, #10203b 0%, transparent 36%),
+        radial-gradient(circle at 78% 68%, #0f2a2a 0%, transparent 34%),
+        var(--bg);
+      background-size: 40px 40px, 40px 40px, auto, auto, auto;
+      overflow: hidden;
+    }
+
+    .shell {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.7rem 1rem;
+      border-bottom: 1px solid rgba(150, 196, 255, 0.2);
+      background: rgba(2, 8, 18, 0.75);
+      backdrop-filter: blur(6px);
+    }
+
+    .title {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      color: #e7f2ff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 66vw;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    button {
+      border: 1px solid rgba(123, 182, 255, 0.55);
+      background: rgba(10, 26, 48, 0.95);
+      color: #d9ebff;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      padding: 0.46rem 0.68rem;
+      cursor: pointer;
+      transition: 150ms ease;
+    }
+
+    button:hover {
+      background: rgba(18, 41, 74, 0.98);
+      border-color: rgba(145, 200, 255, 0.9);
+    }
+
+    #canvas {
+      width: 100vw;
+      height: calc(100vh - 58px);
+      display: block;
+      cursor: grab;
+    }
+
+    #canvas:active {
+      cursor: grabbing;
+    }
+
+    .link {
+      fill: none;
+      stroke: var(--link);
+      stroke-opacity: 0.72;
+      stroke-width: 2.2;
+    }
+
+    .node-card {
+      stroke: rgba(146, 197, 255, 0.65);
+      stroke-width: 1.1;
+      filter: drop-shadow(0 0 12px var(--node-shadow));
+    }
+
+    .node-card.main {
+      fill: var(--node-main);
+    }
+
+    .node-card.sub {
+      fill: var(--node-sub);
+    }
+
+    .node-label {
+      pointer-events: none;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .node-label.main {
+      fill: var(--node-main-text);
+    }
+
+    .node-label.sub {
+      fill: var(--node-sub-text);
+    }
+
+    .node-toggle {
+      fill: rgba(7, 16, 31, 0.72);
+      stroke: rgba(171, 211, 255, 0.65);
+      stroke-width: 1;
+    }
+
+    .node-toggle-text {
+      fill: #e2f0ff;
+      font-size: 12px;
+      font-weight: 700;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .help {
+      position: fixed;
+      right: 1rem;
+      bottom: 1rem;
+      max-width: 330px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 0.75rem 0.85rem;
+      color: var(--panel-text);
+      font-size: 0.83rem;
+      line-height: 1.35;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.26);
+    }
+
+    .help b {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .notes-panel {
+      position: fixed;
+      top: 74px;
+      left: 1rem;
+      width: min(460px, calc(100vw - 2rem));
+      max-height: calc(100vh - 150px);
+      overflow: auto;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      color: var(--panel-text);
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.32);
+      padding: 0.9rem 1rem;
+      display: none;
+      z-index: 8;
+    }
+
+    .notes-panel.visible {
+      display: block;
+    }
+
+    .notes-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .notes-title {
+      font-weight: 700;
+      color: #ecf5ff;
+      font-size: 0.97rem;
+      line-height: 1.3;
+    }
+
+    .notes-source {
+      font-size: 0.78rem;
+      color: #9fccff;
+      margin-bottom: 0.5rem;
+    }
+
+    .notes-body {
+      margin: 0;
+      padding-left: 1.05rem;
+      font-size: 0.84rem;
+      line-height: 1.42;
+    }
+
+    .notes-body li {
+      margin-bottom: 0.42rem;
+    }
+
+    .notes-close {
+      font-size: 0.78rem;
+      padding: 0.3rem 0.5rem;
+      border-radius: 7px;
+    }
+
+    @media (max-width: 780px) {
+      .title {
+        max-width: 44vw;
+        font-size: 0.92rem;
+      }
+
+      .help {
+        max-width: 260px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="toolbar">
+      <div class="title">Cursor Field Engineering Strategy - Interactive Mind Map</div>
+      <div class="controls">
+        <button id="resetView">Reset View</button>
+        <button id="expandAll">Expand All</button>
+        <button id="collapseToTop">Collapse to Top Level</button>
+        <button id="fullscreenBtn">Fullscreen</button>
+      </div>
+    </div>
+    <svg id="canvas" aria-label="Interactive mind map"></svg>
+  </div>
+
+  <div class="help">
+    <b>Presentation controls:</b><br />
+    - Drag background to pan, scroll to zoom.<br />
+    - Click a node to show speaker notes.<br />
+    - Use node +/- to collapse or expand branches.<br />
+    - Use toolbar buttons to quickly reset layout.
+  </div>
+
+  <aside id="notesPanel" class="notes-panel" aria-live="polite">
+    <div class="notes-head">
+      <div id="notesTitle" class="notes-title">Speaker notes</div>
+      <button id="closeNotes" class="notes-close">Close</button>
+    </div>
+    <div id="notesSource" class="notes-source"></div>
+    <ul id="notesBody" class="notes-body"></ul>
+  </aside>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script>
+    const mapData = {
+      name: "Cursor Field Engineering Strategy",
+      children: [
+        {
+          name: "The Problem: The 86%",
+          children: [
+            { name: "14% Writing Code" },
+            { name: "86% Surrounding Work" },
+            { name: "Engineering Burnout" },
+            { name: "Creative Problem Solving focus" }
+          ]
+        },
+        {
+          name: "The Era Shift",
+          children: [
+            { name: "Phase 1: Autocomplete (2023)" },
+            { name: "Phase 2: Agentic Editing (2024)" },
+            { name: "Phase 3: Autonomous Cloud Agents (2026)" },
+            { name: "The Harness as Competitive Moat" }
+          ]
+        },
+        {
+          name: "Cursor Differentiators (The Harness)",
+          children: [
+            { name: "Semantic Codebase Indexing" },
+            { name: "Team Rules (.cursor/rules)" },
+            { name: "Model-Agnostic Routing" },
+            { name: "Privacy Mode (Zero Retention)" },
+            { name: "MCP Integrations (Salesforce, Jira)" },
+            { name: "Plan Mode & Visual Diffs" },
+            { name: "BugBot High-Effort Mode" }
+          ]
+        },
+        { name: "Building the FE Team" },
+        { name: "10/20/30 Day Impact Plan" },
+        { name: "Positioning vs Claude Code" },
+        { name: "Measuring Success & ROI" }
+      ]
+    };
+
+    const speakerNotes = {
+      "Cursor Field Engineering Strategy": {
+        source: "Combined narrative anchor",
+        bullets: [
+          "Open with the 86% problem, move to the era shift, then prove why Cursor's harness wins.",
+          "Use this map to keep the conversation non-linear while preserving your story spine.",
+          "Land on business outcomes: retention, velocity, governance, and organizational memory."
+        ]
+      },
+      "The Problem: The 86%": {
+        source: "CTO Coffee Chat - Act 0",
+        bullets: [
+          "Only 14% of engineering time is writing code; 86% is surrounding work.",
+          "Frame this as a human and retention problem, not a feature comparison.",
+          "Cursor's thesis is attacking the 86% so engineers return to creative, high-judgment work."
+        ]
+      },
+      "14% Writing Code": {
+        source: "CTO Coffee Chat - Act 0",
+        bullets: [
+          "Code generation alone is no longer the hard part in enterprise software.",
+          "This is where most competitors focus; it is table stakes in 2026."
+        ]
+      },
+      "86% Surrounding Work": {
+        source: "CTO Coffee Chat - Act 0",
+        bullets: [
+          "Architecture, testing, security, compliance, integration, and operations dominate effort.",
+          "Position Cursor as infrastructure for this hidden workload, not just coding assistance."
+        ]
+      },
+      "Engineering Burnout": {
+        source: "CTO Coffee Chat - Act 0",
+        bullets: [
+          "High performers lose motivation when they spend days on mechanical context work.",
+          "Better tooling is a retention strategy, not only a productivity lever."
+        ]
+      },
+      "Creative Problem Solving focus": {
+        source: "CTO Coffee Chat - Act 0",
+        bullets: [
+          "Narrative close: give engineers back the part of the job they actually love.",
+          "Connect to morale signal: engineers thanking leadership for unlocking better tools."
+        ]
+      },
+      "The Era Shift": {
+        source: "CTO Coffee Chat - Act 1",
+        bullets: [
+          "Autocomplete era is over; agent infrastructure decisions are now long-horizon bets.",
+          "The moat shifts from raw model access to harness quality and organizational memory.",
+          "Cursor spans autocomplete, agentic editing, and autonomous cloud agent workflows."
+        ]
+      },
+      "Phase 1: Autocomplete (2023)": {
+        source: "CTO Coffee Chat - Act 1",
+        bullets: [
+          "Single-line suggestions in traditional editors solved speed, not system-level complexity.",
+          "Many objections still reference this old product category."
+        ]
+      },
+      "Phase 2: Agentic Editing (2024)": {
+        source: "CTO Coffee Chat - Act 1",
+        bullets: [
+          "Multi-file changes and contextual coding agents became practical for brownfield work.",
+          "Developer preference and adoption accelerated as harness quality improved."
+        ]
+      },
+      "Phase 3: Autonomous Cloud Agents (2026)": {
+        source: "CTO Coffee Chat - Act 1",
+        bullets: [
+          "Agents run from Slack, Jira, and workflow events without a developer at keyboard.",
+          "This expands Cursor from IDE tool to broader software delivery infrastructure."
+        ]
+      },
+      "The Harness as Competitive Moat": {
+        source: "CTO Coffee Chat - Act 1/2",
+        bullets: [
+          "Frontier models commoditize; durable advantage comes from context, routing, and governance.",
+          "Harness quality determines security, correctness, and enterprise scalability."
+        ]
+      },
+      "Cursor Differentiators (The Harness)": {
+        source: "CTO Coffee Chat - Act 2",
+        bullets: [
+          "Use this section as your intellectual core: explain why each capability exists, not just what it is.",
+          "Tie every differentiator to enterprise constraints: governance, reliability, onboarding, and scale."
+        ]
+      },
+      "Semantic Codebase Indexing": {
+        source: "CTO Coffee Chat - Argument 1/2",
+        bullets: [
+          "Turns institutional code knowledge into a queryable layer across large brownfield repos.",
+          "Reduces onboarding drag and legacy risk by making context discoverable on demand."
+        ]
+      },
+      "Team Rules (.cursor/rules)": {
+        source: "CTO Coffee Chat - Argument 2",
+        bullets: [
+          "Encodes standards where code is created, not in detached policy documents.",
+          "Use as your CISO/governance answer for scale and consistency."
+        ]
+      },
+      "Model-Agnostic Routing": {
+        source: "CTO Coffee Chat - Argument 2/Act 3",
+        bullets: [
+          "Route tasks to the right model for quality and cost outcomes.",
+          "Avoid single-vendor lock-in and keep leverage as provider economics shift."
+        ]
+      },
+      "Privacy Mode (Zero Retention)": {
+        source: "CTO Coffee Chat - Argument 2/Study Guide",
+        bullets: [
+          "Direct answer to data-handling concerns in enterprise buying cycles.",
+          "Pair with admin controls and trust posture in security discussions."
+        ]
+      },
+      "MCP Integrations (Salesforce, Jira)": {
+        source: "CTO Coffee Chat - Argument 2/Releases",
+        bullets: [
+          "Agents read real systems context before writing code, improving relevance and quality.",
+          "This is where institutional memory compounds beyond repository files."
+        ]
+      },
+      "Plan Mode & Visual Diffs": {
+        source: "CTO Coffee Chat - Argument 2/Act 3",
+        bullets: [
+          "Preview intent before edits and keep humans in control for riskier changes.",
+          "Critical for trust when leadership asks, 'how do we know what AI changed?'"
+        ]
+      },
+      "BugBot High-Effort Mode": {
+        source: "CTO Coffee Chat - Releases",
+        bullets: [
+          "Automated PR review catches deeper defects before human review.",
+          "Strategic point: lifecycle automation beyond active IDE usage."
+        ]
+      },
+      "Building the FE Team": {
+        source: "10/20/30 Plan - Sections 01/02",
+        bullets: [
+          "Hire for four profiles: Developer Whisperer, Enterprise Navigator, Builder, Post-Sale Bridge.",
+          "Culture principle: 'nothing below you' and multiplier leadership.",
+          "Operate as a system that scales trust, learning, and product intelligence."
+        ]
+      },
+      "10/20/30 Day Impact Plan": {
+        source: "10/20/30 Plan - Section 03",
+        bullets: [
+          "Day 10: listen in-field, map patterns, form hypotheses.",
+          "Day 20: install one high-leverage system and one reusable skill.",
+          "Day 30: show evidence of trust, motion, and a clear 60-90 day trajectory."
+        ]
+      },
+      "Positioning vs Claude Code": {
+        source: "CTO Coffee Chat - Act 3",
+        bullets: [
+          "Steelman Claude first: great for autonomous overnight execution and existing muscle memory.",
+          "Then differentiate on harness advantages: governance, model routing, plan/diff control, brownfield indexing.",
+          "Recommend complementary stack logic instead of replacement rhetoric."
+        ]
+      },
+      "Measuring Success & ROI": {
+        source: "10/20/30 Plan - Decision Systems",
+        bullets: [
+          "Track six dimensions: PLG conversion, FE-influenced win rate, time-to-technical-win, sales NPS, prioritization effectiveness, field-to-product signal velocity.",
+          "Move relationship and prioritization early; cycle-dependent metrics show later.",
+          "Anchor with outcome stories executives already understand: velocity, adoption, and retention."
+        ]
+      }
+    };
+
+    const svg = d3.select("#canvas");
+    const g = svg.append("g");
+    const linkLayer = g.append("g");
+    const nodeLayer = g.append("g");
+
+    const zoom = d3.zoom()
+      .scaleExtent([0.35, 2.5])
+      .on("zoom", (event) => g.attr("transform", event.transform));
+    svg.call(zoom);
+
+    const root = d3.hierarchy(mapData);
+    root.x0 = 0;
+    root.y0 = 0;
+
+    let nodeId = 0;
+    root.each((d) => { d.id = nodeId++; });
+
+    root.children?.forEach(collapseFromDepthTwo);
+
+    const tree = d3.tree().nodeSize([78, 320]);
+    const transitionMs = 380;
+
+    function collapseFromDepthTwo(node) {
+      if (!node.children) return;
+      node.children.forEach((child) => {
+        if (child.depth >= 2) return;
+        if (child.children) {
+          child._children = child.children;
+          child.children = null;
+        }
+      });
+    }
+
+    function wrapLabel(textSelection, width) {
+      textSelection.each(function () {
+        const text = d3.select(this);
+        const words = text.text().split(/\s+/).reverse();
+        let word;
+        let line = [];
+        let lineNumber = 0;
+        const lineHeight = 1.18;
+        const y = text.attr("y");
+        const x = text.attr("x");
+        const dy = parseFloat(text.attr("dy"));
+        let tspan = text.text(null).append("tspan").attr("x", x).attr("y", y).attr("dy", dy + "em");
+
+        while ((word = words.pop())) {
+          line.push(word);
+          tspan.text(line.join(" "));
+          if (tspan.node().getComputedTextLength() > width) {
+            line.pop();
+            tspan.text(line.join(" "));
+            line = [word];
+            tspan = text.append("tspan")
+              .attr("x", x)
+              .attr("y", y)
+              .attr("dy", ++lineNumber * lineHeight + dy + "em")
+              .text(word);
+          }
+        }
+      });
+    }
+
+    function cardStyleForDepth(depth) {
+      return depth <= 1 ? "main" : "sub";
+    }
+
+    function pathCurve(d) {
+      return `M${d.source.y},${d.source.x}C${(d.source.y + d.target.y) / 2},${d.source.x} ${(d.source.y + d.target.y) / 2},${d.target.x} ${d.target.y},${d.target.x}`;
+    }
+
+    function update(source, shouldFit = false) {
+      const treeData = tree(root);
+      const nodes = treeData.descendants();
+      const links = treeData.links();
+
+      const node = nodeLayer.selectAll("g.node")
+        .data(nodes, (d) => d.id);
+
+      const nodeEnter = node.enter()
+        .append("g")
+        .attr("class", "node")
+        .attr("transform", () => `translate(${source.y0},${source.x0})`)
+        .style("opacity", 0)
+        .style("cursor", "pointer")
+        .on("click", (_, d) => {
+          renderNotes(d.data.name);
+        });
+
+      nodeEnter.append("rect")
+        .attr("class", (d) => `node-card ${cardStyleForDepth(d.depth)}`)
+        .attr("x", -6)
+        .attr("y", -18)
+        .attr("rx", 9)
+        .attr("ry", 9)
+        .attr("width", 12)
+        .attr("height", 36);
+
+      nodeEnter.append("text")
+        .attr("class", (d) => `node-label ${cardStyleForDepth(d.depth)}`)
+        .attr("x", 12)
+        .attr("y", -2)
+        .attr("dy", 0)
+        .text((d) => d.data.name);
+
+      nodeEnter.selectAll("text.node-label")
+        .each(function () {
+          wrapLabel(d3.select(this), 220);
+        });
+
+      nodeEnter.each(function (d) {
+        const group = d3.select(this);
+        const text = group.select("text").node();
+        const textBox = text.getBBox();
+        d.toggleX = textBox.width + 20;
+        group.select("rect.node-card")
+          .attr("x", textBox.x - 10)
+          .attr("y", textBox.y - 8)
+          .attr("width", textBox.width + 20)
+          .attr("height", textBox.height + 15);
+      });
+
+      nodeEnter.filter((d) => d.children || d._children)
+        .append("circle")
+        .attr("class", "node-toggle")
+        .attr("r", 9)
+        .attr("cx", (d) => d.toggleX || 20)
+        .attr("cy", 0)
+        .style("cursor", "pointer")
+        .on("click", (event, d) => {
+          event.stopPropagation();
+          if (d.children) {
+            d._children = d.children;
+            d.children = null;
+          } else {
+            d.children = d._children;
+            d._children = null;
+          }
+          update(d, false);
+        });
+
+      nodeEnter.filter((d) => d.children || d._children)
+        .append("text")
+        .attr("class", "node-toggle-text")
+        .attr("x", (d) => d.toggleX || 20)
+        .attr("y", 4)
+        .attr("text-anchor", "middle")
+        .text((d) => d._children ? "+" : "-")
+        .style("cursor", "pointer")
+        .on("click", (event, d) => {
+          event.stopPropagation();
+          if (d.children) {
+            d._children = d.children;
+            d.children = null;
+          } else {
+            d.children = d._children;
+            d._children = null;
+          }
+          update(d, false);
+        });
+
+      const nodeUpdate = nodeEnter.merge(node);
+
+      nodeUpdate.transition().duration(transitionMs)
+        .attr("transform", (d) => `translate(${d.y},${d.x})`)
+        .style("opacity", 1);
+
+      nodeUpdate.select("text.node-toggle-text")
+        .text((d) => d._children ? "+" : "-");
+
+      const nodeExit = node.exit().transition().duration(transitionMs)
+        .attr("transform", () => `translate(${source.y},${source.x})`)
+        .style("opacity", 0)
+        .remove();
+
+      nodeExit.select("rect").attr("width", 0).attr("height", 0);
+
+      const link = linkLayer.selectAll("path.link")
+        .data(links, (d) => d.target.id);
+
+      const linkEnter = link.enter()
+        .append("path")
+        .attr("class", "link")
+        .attr("d", () => {
+          const o = { x: source.x0, y: source.y0 };
+          return pathCurve({ source: o, target: o });
+        });
+
+      linkEnter.merge(link).transition().duration(transitionMs)
+        .attr("d", pathCurve);
+
+      link.exit().transition().duration(transitionMs)
+        .attr("d", () => {
+          const o = { x: source.x, y: source.y };
+          return pathCurve({ source: o, target: o });
+        })
+        .remove();
+
+      nodes.forEach((d) => {
+        d.x0 = d.x;
+        d.y0 = d.y;
+      });
+
+      if (shouldFit) {
+        fitToScreen(700);
+      }
+    }
+
+    function fitToScreen(duration = 500) {
+      const bounds = g.node().getBBox();
+      const fullWidth = window.innerWidth;
+      const fullHeight = window.innerHeight - 58;
+
+      if (!bounds.width || !bounds.height) return;
+
+      const widthRatio = fullWidth / (bounds.width + 120);
+      const heightRatio = fullHeight / (bounds.height + 120);
+      const nextScale = Math.max(0.35, Math.min(1.75, Math.min(widthRatio, heightRatio)));
+      const x = (fullWidth - bounds.width * nextScale) / 2 - bounds.x * nextScale;
+      const y = (fullHeight - bounds.height * nextScale) / 2 - bounds.y * nextScale;
+
+      svg.transition().duration(duration)
+        .call(zoom.transform, d3.zoomIdentity.translate(x, y).scale(nextScale));
+    }
+
+    function expandAll(node) {
+      if (node._children) {
+        node.children = node._children;
+        node._children = null;
+      }
+      if (node.children) {
+        node.children.forEach(expandAll);
+      }
+    }
+
+    function collapseToTop(node) {
+      if (node.depth > 1 && node.children) {
+        node._children = node.children;
+        node.children = null;
+      }
+      if (node.children) {
+        node.children.forEach(collapseToTop);
+      }
+    }
+
+    const notesPanel = document.getElementById("notesPanel");
+    const notesTitle = document.getElementById("notesTitle");
+    const notesSource = document.getElementById("notesSource");
+    const notesBody = document.getElementById("notesBody");
+    const closeNotes = document.getElementById("closeNotes");
+
+    function renderNotes(nodeName) {
+      const entry = speakerNotes[nodeName] || {
+        source: "No dedicated source mapped yet",
+        bullets: ["Add notes for this node in the speakerNotes object."]
+      };
+
+      notesTitle.textContent = nodeName;
+      notesSource.textContent = `Source: ${entry.source}`;
+      notesBody.innerHTML = "";
+
+      entry.bullets.forEach((bullet) => {
+        const li = document.createElement("li");
+        li.textContent = bullet;
+        notesBody.appendChild(li);
+      });
+
+      notesPanel.classList.add("visible");
+    }
+
+    document.getElementById("resetView").addEventListener("click", () => fitToScreen(450));
+    document.getElementById("expandAll").addEventListener("click", () => {
+      expandAll(root);
+      update(root, true);
+    });
+    document.getElementById("collapseToTop").addEventListener("click", () => {
+      collapseToTop(root);
+      update(root, true);
+    });
+
+    document.getElementById("fullscreenBtn").addEventListener("click", () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    });
+    closeNotes.addEventListener("click", () => {
+      notesPanel.classList.remove("visible");
+    });
+
+    window.addEventListener("resize", () => fitToScreen(250));
+
+    update(root, true);
+    renderNotes(root.data.name);
+  </script>
+</body>
+</html>

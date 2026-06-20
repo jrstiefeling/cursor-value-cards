@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cursor — Layers of Value</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=Sora:wght@200;300;400;500;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #080808;
+  --surface: #0e0e0e;
+  --border: #222;
+  --text: #e8e8e8;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Sora', sans-serif;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  overflow: hidden;
+}
+
+.slide {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 36px 56px 24px;
+  position: relative;
+  background: var(--bg);
+  overflow-y: auto;
+}
+
+.slide::-webkit-scrollbar { width: 3px; }
+.slide::-webkit-scrollbar-thumb { background: #1a1a1a; }
+
+.corner {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  font-family: var(--mono);
+  font-size: 8px;
+  color: #444;
+  letter-spacing: 0.15em;
+}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: #888;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.h2 {
+  font-size: clamp(13px, 1.4vw, 18px);
+  font-weight: 200;
+  color: #e0e0e0;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin-bottom: 12px;
+}
+.h2 em { font-style: normal; font-weight: 500; color: #fff; }
+
+.headers {
+  display: grid;
+  grid-template-columns: 72px 1fr 188px;
+  gap: 1px;
+  margin-bottom: 3px;
+}
+
+.col-header {
+  font-family: var(--mono);
+  font-size: 7.5px;
+  color: #555;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.diagram {
+  display: grid;
+  grid-template-columns: 72px 1fr 188px;
+  gap: 1px;
+  flex: 1;
+  min-height: 0;
+}
+
+.layers { display: flex; flex-direction: column; gap: 1px; }
+.impact-col { display: flex; flex-direction: column; gap: 1px; }
+
+.layer {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+}
+
+.impact-cell {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+}
+
+.layer-num {
+  font-family: var(--mono);
+  font-size: 7px;
+  color: #555;
+  letter-spacing: 0.15em;
+  margin-bottom: 3px;
+}
+
+.layer-title {
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.3;
+  margin-bottom: 3px;
+  color: #ccc;
+}
+
+.layer-body {
+  font-size: 11px;
+  color: #666;
+  line-height: 1.55;
+}
+
+.layer-body strong { color: #999; font-weight: 500; }
+
+.impact-title {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  margin-bottom: 2px;
+  color: #bbb;
+}
+
+.impact-body {
+  font-size: 10.5px;
+  color: #555;
+  line-height: 1.5;
+}
+
+/* Layer accent colors */
+.layer-6 { border-left: 2px solid #2a3a2a; background: #0b140b; }
+.layer-6 .layer-title { color: #7abf7a; }
+.layer-6 .layer-num { color: #3a6a3a; }
+
+.layer-5 { border-left: 2px solid #2a2a3a; background: #0b140b; }
+.layer-5 .layer-title { color: #8b8bcf; }
+
+.layer-4 { border-left: 2px solid #2a3030; background: #0a1212; }
+.layer-4 .layer-title { color: #6b9f9f; }
+
+.layer-3 { border-left: 2px solid #1e3a3a; background: #0a1212; }
+.layer-3 .layer-title { color: #5aafaf; }
+
+.layer-2 { border-left: 2px solid #1e1e1e; background: #111109; }
+.layer-1 { border-left: 2px solid #1e1e1e; background: #111109; }
+
+/* Impact accent colors */
+.impact-6 { border-left: 2px solid #2a3a2a; background: #0b140b; }
+.impact-6 .impact-title { color: #7abf7a; }
+
+.impact-5 { border-left: 2px solid #2a2a3a; background: #0b140b; }
+.impact-5 .impact-title { color: #8b8bcf; }
+
+.impact-4 { border-left: 2px solid #2a3030; background: #0a1212; }
+.impact-4 .impact-title { color: #6b9f9f; }
+
+.impact-3 { border-left: 2px solid #1e3a3a; background: #0a1212; }
+.impact-3 .impact-title { color: #5aafaf; }
+
+/* Bracket col */
+.bracket-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.bracket-section {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  border-right: 1px solid #1a1a1a;
+}
+
+.bracket-text {
+  font-family: var(--mono);
+  font-size: 7pt;
+  color: #666;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+/* Footer */
+.footer {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.footnote {
+  font-family: var(--mono);
+  font-size: 7.5px;
+  color: #444;
+  letter-spacing: 0.08em;
+}
+
+.footnote-glass {
+  font-family: var(--mono);
+  font-size: 7.5px;
+  color: #2e5a2e;
+  letter-spacing: 0.08em;
+  font-style: italic;
+}
+</style>
+</head>
+<body>
+
+<div class="slide">
+  <div class="corner">CURSOR · FIELD ENGINEERING</div>
+  <div class="eyebrow">Understanding Cursor's layers of value</div>
+  <div class="h2">The model is table stakes. The <em>harness</em> is what makes it yours.</div>
+
+  <div class="headers">
+    <div></div>
+    <div class="col-header" style="padding-left:14px;">Layer</div>
+    <div class="col-header" style="padding-left:12px;">Impact</div>
+  </div>
+
+  <div class="diagram">
+
+    <!-- Bracket col -->
+    <div class="bracket-col">
+      <div class="bracket-section" style="flex:2; border-top:1px solid #1a1a1a; background:#0b140b;">
+        <span class="bracket-text" style="color:#3a6a3a;">What you experience</span>
+      </div>
+      <div class="bracket-section" style="flex:2.4; border-top:1px solid #1a1a1a; background:#0a1212;">
+        <span class="bracket-text" style="color:#1e5a5a;">What Cursor does</span>
+      </div>
+      <div class="bracket-section" style="flex:2; border-top:1px solid #1a1a1a; background:#111109;">
+        <span class="bracket-text" style="color:#555;">What Cursor knows</span>
+      </div>
+    </div>
+
+    <!-- Layers -->
+    <div class="layers">
+
+      <!-- Layer 6: Agents Window -->
+      <div class="layer layer-6" style="flex:1.2;">
+        <div class="layer-num">06 — AGENTS WINDOW · CURSOR 3</div>
+        <div class="layer-title">The 86% — developer as director, not writer</div>
+        <div class="layer-body">
+          Parallel agent fleets across repos, worktrees, cloud + local environments<br>
+          Cloud-to-local handoff · /multitask spawns async subagents simultaneously<br>
+          <strong>BugBot · Automations · background agents that ship while you sleep</strong>
+        </div>
+      </div>
+
+      <!-- Layer 5: IDE Surface -->
+      <div class="layer layer-5" style="flex:1;">
+        <div class="layer-num">05 — IDE SURFACE</div>
+        <div class="layer-title">The 14% — developer at the keyboard</div>
+        <div class="layer-body">Tab completion · ⌘K inline edit · codebase chat · visual diffs · agent mode with plan review</div>
+      </div>
+
+      <!-- Layer 4: Model + Subagent Routing -->
+      <div class="layer layer-4" style="flex:1.1;">
+        <div class="layer-num">04 — MODEL + SUBAGENT ROUTING</div>
+        <div class="layer-title">Right model. Right task. Right cost.</div>
+        <div class="layer-body">
+          Harness routes each task to the best model by quality and cost<br>
+          <strong>Fast models</strong> for execution &nbsp;·&nbsp; <strong>Frontier models</strong> for complex planning &nbsp;·&nbsp; <strong>Efficient models</strong> for writing<br>
+          Parallel subagents · no model lock-in · token efficiency built in
+        </div>
+      </div>
+
+      <!-- Layer 3: Harness -->
+      <div class="layer layer-3" style="flex:1.3;">
+        <div class="layer-num">03 — HARNESS</div>
+        <div class="layer-title">What turns a general-purpose model into an engineering asset.</div>
+        <div class="layer-body" style="margin-top:2px;">
+          <strong>Semantic codebase indexing</strong> (Brownfield) &nbsp;·&nbsp; <strong>Context discipline</strong> — right information, right size, no hallucination cliff<br>
+          <strong>Plan Mode</strong> (governance of complex tasks) &nbsp;·&nbsp; <strong>Team Rules & Privacy Mode</strong> (Governance)<br>
+          <strong>MCP & Skills Marketplace</strong> (Integrations)
+        </div>
+      </div>
+
+      <!-- Layer 2: Team Knowledge -->
+      <div class="layer layer-2" style="flex:1;">
+        <div class="layer-num">02 — TEAM KNOWLEDGE</div>
+        <div class="layer-title">Why decisions were made</div>
+        <div class="layer-body">Slack · Teams · Jira · Granola — the context that never makes it into a commit message</div>
+      </div>
+
+      <!-- Layer 1: Codebase -->
+      <div class="layer layer-1" style="flex:1;">
+        <div class="layer-num">01 — CODEBASE</div>
+        <div class="layer-title">What your code does</div>
+        <div class="layer-body">Repos · files · history — your brownfield and greenfield codebase</div>
+      </div>
+
+    </div>
+
+    <!-- Impact col -->
+    <div class="impact-col">
+
+      <div class="impact-cell impact-6" style="flex:1.2;">
+        <div class="impact-title">Ship faster than your engineers can write</div>
+        <div class="impact-body">Agents execute, test, and verify. Developer directs and merges.</div>
+      </div>
+
+      <div class="impact-cell impact-5" style="flex:1;">
+        <div class="impact-title">30%+ velocity</div>
+        <div class="impact-body">Developer owns every change.</div>
+      </div>
+
+      <div class="impact-cell impact-4" style="flex:1.1;">
+        <div class="impact-title">No model lock-in</div>
+        <div class="impact-body">Route by quality and cost. Never paying frontier prices for a routine job.</div>
+      </div>
+
+      <div class="impact-cell impact-3" style="flex:1.3;">
+        <div class="impact-title">Standards enforced at creation</div>
+        <div class="impact-body">CISO-ready · model-agnostic · Not a policy doc — built into every AI interaction.</div>
+      </div>
+
+      <div class="impact-cell" style="flex:1; border-left:2px solid #1e1e1e; background:#111109;">
+        <div class="impact-title" style="color:#aaa;">Institutional memory</div>
+        <div class="impact-body">The reasoning behind your code survives when your best engineers leave.</div>
+      </div>
+
+      <div class="impact-cell" style="flex:1; border-left:2px solid #1e1e1e; background:#111109;">
+        <div class="impact-title" style="color:#aaa;">New engineers productive in days</div>
+        <div class="impact-body">Not weeks. The codebase answers their questions before they have to ask.</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <div class="footnote">Knowledge becomes institutional memory when it compounds in the harness &nbsp;·&nbsp; Layers 1–3 persist &nbsp;·&nbsp; Layers 4–6 assembled per session</div>
+    <div class="footnote-glass">Where this is heading: the developer layer becomes optional. Describe the outcome. The rest runs itself.</div>
+  </div>
+
+</div>
+
+</body>
+</html>

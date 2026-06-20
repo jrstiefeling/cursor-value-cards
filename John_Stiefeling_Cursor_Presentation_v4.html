@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>John Stiefeling — 10/20/30 · Cursor</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=Sora:wght@200;300;400;500;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #080808;
+  --surface: #0e0e0e;
+  --surface2: #141414;
+  --border: #222;
+  --text: #e8e8e8;
+  --text-secondary: #aaa;
+  --text-muted: #888;
+  --text-ghost: #555;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Sora', sans-serif;
+  --green: #4ade80;
+}
+
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--sans); overflow: hidden; }
+.deck { width: 100vw; height: 100vh; display: flex; flex-direction: column; }
+
+.slide {
+  display: none; flex: 1; overflow-y: auto;
+  position: relative; background: var(--bg);
+  padding: 44px 64px 32px;
+}
+.slide.active { display: flex; flex-direction: column; }
+.slide-center { justify-content: center; }
+
+.slide::-webkit-scrollbar { width: 3px; }
+.slide::-webkit-scrollbar-thumb { background: #1a1a1a; }
+
+.controls {
+  height: 44px; min-height: 44px;
+  background: #050505; border-top: 1px solid #141414;
+  display: flex; align-items: center;
+  justify-content: space-between; padding: 0 20px; flex-shrink: 0;
+}
+.nav-btn { font-family: var(--mono); font-size: 9px; color: #555; background: none; border: 1px solid #1a1a1a; padding: 5px 14px; cursor: pointer; letter-spacing: 0.06em; transition: all 0.15s; }
+.nav-btn:hover { color: #aaa; border-color: #333; }
+.nav-dots { display: flex; gap: 6px; align-items: center; }
+.nav-dot { width: 4px; height: 4px; border-radius: 50%; background: #222; cursor: pointer; border: none; padding: 0; transition: background 0.2s, transform 0.2s; }
+.nav-dot.active { background: #666; transform: scale(1.3); }
+.slide-count { font-family: var(--mono); font-size: 9px; color: #333; letter-spacing: 0.1em; min-width: 44px; text-align: right; }
+
+.corner { position: absolute; top: 22px; right: 28px; font-family: var(--mono); font-size: 8px; color: #1e1e1e; letter-spacing: 0.15em; }
+.eyebrow { font-family: var(--mono); font-size: 9px; color: #555; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 10px; }
+.section-tag { font-family: var(--mono); font-size: 9px; color: #333; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 24px; }
+.h1 { font-size: clamp(28px, 3.5vw, 46px); font-weight: 200; color: #f0f0f0; line-height: 1.1; letter-spacing: -0.03em; }
+.h1 em { font-style: normal; font-weight: 500; color: #fff; }
+.h2 { font-size: clamp(18px, 2.2vw, 28px); font-weight: 200; color: #e0e0e0; line-height: 1.15; letter-spacing: -0.02em; }
+.h2 em { font-style: normal; font-weight: 500; color: #fff; }
+.h3 { font-size: 13px; font-weight: 500; color: #ccc; line-height: 1.3; margin-bottom: 8px; }
+.body { font-size: 12px; color: var(--text-secondary); line-height: 1.65; }
+.body-sm { font-size: 11px; color: #888; line-height: 1.6; }
+.rule { width: 28px; height: 1px; background: #222; margin: 18px 0; }
+
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.four-col { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+
+.card { background: var(--surface); border: 1px solid var(--border); padding: 16px 18px; border-radius: 2px; }
+.card-label { font-family: var(--mono); font-size: 8px; color: #444; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+.card-title { font-size: 12px; font-weight: 500; color: #ccc; margin-bottom: 6px; line-height: 1.3; }
+.card-body { font-size: 11px; color: #888; line-height: 1.6; }
+
+.quote { border-left: 2px solid #1e1e1e; padding-left: 16px; }
+.quote-text { font-size: 12px; font-weight: 300; color: #bbb; line-height: 1.7; font-style: italic; }
+.quote-text em { font-style: normal; color: #ddd; font-weight: 400; }
+.quote-attr { font-family: var(--mono); font-size: 8px; color: #3a3a3a; letter-spacing: 0.12em; margin-bottom: 6px; }
+
+.brow { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
+.brow-dot { width: 3px; height: 3px; background: #444; border-radius: 50%; flex-shrink: 0; margin-top: 7px; }
+.brow-dot.hi { background: #555; }
+.brow-text { font-size: 11px; color: #999; line-height: 1.55; }
+.brow-text strong { color: #ccc; font-weight: 500; }
+
+.signal { background: #080808; border: 1px solid #181818; border-left: 2px solid #252525; padding: 10px 14px; margin-top: 12px; }
+.signal-label { font-family: var(--mono); font-size: 8px; color: #333; letter-spacing: 0.14em; margin-bottom: 5px; }
+.signal-text { font-size: 11px; color: #777; line-height: 1.55; font-style: italic; }
+.signal-note { font-family: var(--mono); font-size: 8px; color: #2a6a2a; letter-spacing: 0.1em; margin-top: 6px; }
+
+.vrow { display: flex; gap: 18px; align-items: flex-start; margin-bottom: 14px; }
+.vkey { font-family: var(--mono); font-size: 8.5px; color: #444; letter-spacing: 0.1em; text-transform: uppercase; min-width: 88px; padding-top: 1px; }
+.vval { font-size: 11px; color: #999; line-height: 1.55; }
+.vval strong { color: #ccc; font-weight: 500; }
+
+.mrow { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #111; }
+.mrow:last-child { border-bottom: none; }
+.m-label { font-size: 12px; color: #bbb; font-weight: 400; }
+.m-dim { font-family: var(--mono); font-size: 9px; color: #444; letter-spacing: 0.08em; display: block; margin-top: 2px; }
+.m-horizon { font-family: var(--mono); font-size: 9px; padding: 2px 8px; border: 1px solid #1e1e1e; color: #555; white-space: nowrap; }
+.m-horizon.now { border-color: #1a3a1a; color: var(--green); }
+
+.fp-row { padding: 9px 0; border-bottom: 1px solid #111; display: flex; gap: 16px; align-items: baseline; }
+.fp-row:last-child { border-bottom: none; }
+.fp-num { font-family: var(--mono); font-size: 9px; color: #2a2a2a; min-width: 20px; }
+.fp-text { font-size: 12px; color: #ccc; font-weight: 300; }
+
+.stat-box { background: var(--surface); border: 1px solid var(--border); padding: 14px 16px; text-align: center; }
+.stat-val { font-family: var(--mono); font-size: 20px; color: #e0e0e0; margin-bottom: 4px; }
+.stat-desc { font-size: 9px; color: #444; line-height: 1.4; }
+
+.arc { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; margin-bottom: 18px; }
+.arc-block { background: var(--surface); padding: 14px 18px; }
+.arc-num { font-family: var(--mono); font-size: 26px; font-weight: 300; color: #555; line-height: 1; margin-bottom: 6px; }
+.arc-title { font-size: 12px; font-weight: 500; color: #bbb; margin-bottom: 3px; }
+.arc-sub { font-size: 10px; color: #555; font-style: italic; }
+
+.prog { margin-bottom: 13px; padding-bottom: 13px; border-bottom: 1px solid #111; }
+.prog:last-child { border-bottom: none; margin-bottom: 0; }
+.prog-title { font-size: 12px; font-weight: 500; color: #ccc; margin-bottom: 4px; }
+.prog-body { font-size: 11px; color: #777; line-height: 1.6; }
+.prog-body em { font-style: italic; color: #888; }
+
+.day-header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 16px; }
+.day-num { font-family: var(--mono); font-size: 36px; font-weight: 300; color: #222; line-height: 1; }
+.day-label { font-size: 18px; font-weight: 300; color: #888; }
+.day-label em { font-style: normal; color: #ccc; font-weight: 400; }
+
+.posture { font-size: 11px; color: #3a3a3a; font-style: italic; margin-bottom: 16px; font-family: var(--mono); letter-spacing: 0.04em; }
+
+.longer-block { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid #111; }
+.longer-block:last-child { border-bottom: none; }
+.longer-label { font-family: var(--mono); font-size: 8px; color: #2a6a2a; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 6px; }
+.longer-title { font-size: 12px; font-weight: 500; color: #aaa; margin-bottom: 6px; }
+
+.sp { margin-top: 12px; }
+.div { width: 100%; height: 1px; background: #141414; margin: 14px 0; }
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- S1: TITLE -->
+<div class="slide slide-center active" id="s1">
+  <div class="corner">CURSOR · FIELD ENGINEERING</div>
+  <div class="section-tag">John Stiefeling &nbsp;·&nbsp; June 17, 2026</div>
+  <div class="h1" style="margin-bottom:16px;">
+    How I build the<br>
+    <em>enterprise motion</em><br>
+    around what you've built.
+  </div>
+  <div class="rule"></div>
+  <div class="body" style="color:#555; max-width:460px;">
+    10 / 20 / 30 Day Impact Plan &nbsp;·&nbsp; Field Engineering Manager<br>
+    <span style="color:#2a2a2a;">For Diggory Rycroft + Sahil Patel</span>
+  </div>
+</div>
+
+<!-- S2: WHY CUSTOMERS -->
+<div class="slide" id="s2">
+  <div class="corner">THE MISSION</div>
+  <div class="eyebrow">Why — For Cursor's Customers</div>
+  <div class="h2" style="margin-bottom:16px;">Only <em>14%</em> of engineering<br>is writing code.</div>
+  <div class="two-col" style="gap:32px;">
+    <div>
+      <div class="quote" style="margin-bottom:14px;">
+        <div class="quote-text">The other 86% is architecture, testing, security, compliance — that <em>nobody celebrates</em> but everything depends on. The engineer who gets that back doesn't just ship faster. They get their next promotion. They stay instead of leaving for a company that gives them better tools.</div>
+      </div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text">Your best engineer today solved <strong>zero hard problems.</strong></div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text">The competitor who fixes this first <strong>attracts the engineers you're trying to keep.</strong></div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>We're not selling software.</strong> We're giving someone back the part of their job they love. That's the human outcome.</div></div>
+    </div>
+    <div>
+      <div class="signal" style="margin-bottom:12px;">
+        <div class="signal-label">Why Change / Why Now / Why Cursor</div>
+        <div class="signal-text">The 86% tax is getting more expensive. The infrastructure window is open — enterprises choosing their AI-native platform today lock in a decade of advantage. The developer has already chosen Cursor. The enterprise motion is the missing piece.</div>
+      </div>
+      <div class="quote">
+        <div class="quote-text">The question isn't how does Cursor work. It's: <em>what happens to the companies that don't answer this question while the window is still open?</em></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S3: WHY CURSOR -->
+<div class="slide" id="s3">
+  <div class="corner">THE MISSION</div>
+  <div class="eyebrow">Why — For Cursor</div>
+  <div class="h2" style="margin-bottom:16px;">Developer love is <em>real.</em><br>And it's perishable.</div>
+  <div class="two-col">
+    <div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text">I was inside the Salesforce adoption — <strong>on the field side.</strong> Leading my SE team through it. 90%+ adoption across 6 engineering clouds in 3 weeks. Legacy coverage cut from <strong>26 engineer days to 4 per module.</strong></div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text">You don't send a thank-you Slack about software. <strong>You send it when something gives you back the part of your job you love.</strong></div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text">Claude Code is coming up fast. Anthropic has enterprise relationships Cursor doesn't have yet. <strong>The enterprises choosing now are choosing for a decade.</strong></div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text">The difference between Cursor becoming <em>the</em> platform versus remaining a beloved developer tool that never converted — is <strong>the enterprise motion. The Field Engineering function.</strong></div></div>
+    </div>
+    <div>
+      <div class="quote" style="margin-bottom:14px;">
+        <div class="quote-attr">THE GAP</div>
+        <div class="quote-text">Between the developer who found Cursor on a Tuesday and the CTO who signs the enterprise agreement — <em>that's the most interesting job in enterprise software right now.</em></div>
+      </div>
+      <div class="signal">
+        <div class="signal-label">Diggory — you closed that gap at Grab.</div>
+        <div class="signal-text">I want to build the system that does it at scale. That's why this role matters. That's why it matters now.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S4: WHY ME -->
+<div class="slide" id="s4">
+  <div class="corner">THE MISSION</div>
+  <div class="eyebrow">Why — For Me</div>
+  <div class="two-col" style="gap:44px;">
+    <div>
+      <div class="h3" style="color:#888; margin-bottom:14px;">I've been building the same architecture as Cursor — from a different angle.</div>
+      <div class="vrow">
+        <div class="vkey">slackbot agents</div>
+        <div class="vval">Application + harness layer. Slack is the harness. The agents are the application. The model does the work in between. <strong>Cursor Layers 5 and 6. Same architecture.</strong></div>
+      </div>
+      <div class="vrow">
+        <div class="vkey">tableau next</div>
+        <div class="vval">Semantic layer — data queryable in plain English without knowing the underlying tables. <strong>Cursor's codebase indexing does the same thing for code. Layers 1 and 2.</strong> I sold the semantic layer for data. Now I want to sell it for code.</div>
+      </div>
+      <div class="vrow">
+        <div class="vkey">salesforce MCP</div>
+        <div class="vval">Salesforce going headless — Claude Code and MCP become the interface layer. The product stops being a UI and becomes a set of capabilities AI can orchestrate. <strong>That's Cursor's Layer 3 bet.</strong> I'm watching this transition from inside the largest enterprise software company in the world.</div>
+      </div>
+      <div style="margin-top:10px; font-size:11px; color:#555; font-style:italic;">These aren't analogies. They're the same problems. I've been building toward this conversation for a year without knowing it.</div>
+    </div>
+    <div>
+      <div class="quote" style="margin-bottom:14px;">
+        <div class="quote-text">Product management → usability labs → UX → solutions → enterprise sales leadership → people leadership. Every turn was toward the same thing: <em>the moment when technology connects with a human being and something clicks.</em></div>
+      </div>
+      <div class="quote" style="margin-bottom:14px;">
+        <div class="quote-text">3D printer. Home automation. LED art for Burning Man. Motorcycles. Raves. The same curiosity that makes me wire my house is the same curiosity that makes me build a prototype before the roadmap exists. <em>It's one life. I don't separate them.</em></div>
+      </div>
+      <div class="signal">
+        <div class="signal-label">Why this role, why now</div>
+        <div class="signal-text">I've never had a product this true to build around. Red tape makes me slower. First principles make me faster.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S5: WHAT EXCEPTIONAL LOOKS LIKE + PROFILES OVERVIEW -->
+<div class="slide" id="s5">
+  <div class="corner">01 — HIRING FOR THE AWKWARD TEENAGE YEARS</div>
+  <div class="eyebrow">Trust architecture role</div>
+  <div class="h2" style="font-size:clamp(16px,1.8vw,22px); margin-bottom:16px;">The SE is often the first person<br>a Fortune 500 buyer <em>actually believes.</em></div>
+  <div class="two-col" style="gap:36px;">
+    <div>
+      <div class="h3" style="margin-bottom:12px; color:#666;">What exceptional looks like</div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Curious by default</strong> — already knows the changelog, already building before you ask</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Passionate and authentic</strong> — you feel it. It's not a performance.</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Find a need, fill a need</strong> — sees the gap and moves toward it</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Maven</strong> — obsessively learns, can't help sharing it</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Relationship creator</strong> — builds trust fast. Not networking. Genuine connection.</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Builder instinct</strong> — ships in Cursor before every call. The demo is something they made. This is the baseline, not a profile.</div></div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:10px; border-left:2px solid #2a1a1a;">
+        <div class="card-label">The Brilliant Loner — anti-pattern</div>
+        <div class="card-body" style="color:#666;">Hides behind tech · doesn't active listen · no emotional connection · works alone · glass half empty · wilts under pace · Mandate Waiter · Demo Memorizer · Trickle-Down Thinker. <em style="color:#555;">Nine failure modes. The SE who wins at Cursor uses technical depth to build trust — not to avoid the human conversation.</em></div>
+      </div>
+      <div class="signal">
+        <div class="signal-label">The verticalization signal</div>
+        <div class="signal-text">I know Cursor is building vertical teams. I've lived this — CMT, CBS, regional to national industry-specific. Happy to go deeper on which vertical you're thinking about.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S6: THREE PROFILES -->
+<div class="slide" id="s6">
+  <div class="corner">01 — HIRING FOR THE AWKWARD TEENAGE YEARS</div>
+  <div class="eyebrow">Four profiles</div>
+  <div class="three-col" style="margin-bottom:12px;">
+    <div class="card">
+      <div class="card-label">Profile 01</div>
+      <div class="card-title">The Developer Whisperer</div>
+      <div class="card-body">5–7 yrs engineering → pre-sales. Earns credibility with Staff Engineers. Speaks brownfield. <strong style="color:#bbb;">Explains AI output — doesn't just produce it.</strong> Wins the technical evaluation because the customer's engineers trust them.</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Profile 02</div>
+      <div class="card-title">The Technical Storyteller</div>
+      <div class="card-body">Broad top of funnel — consulting, architecture, product strategy. Runs the transformation conversation with CEOs and CTOs. Capability mapping. App rationalization. <strong style="color:#bbb;">"Uber wasn't invented by taxi drivers."</strong> The person a CTO calls back not to ask a technical question — but to continue the conversation.</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Profile 03</div>
+      <div class="card-title">The Enterprise Navigator</div>
+      <div class="card-body">Lived PLG→enterprise at Stripe, Vercel, Twilio. Fluent with CISO, CFO, procurement. Learns industry KPIs and workflows fast. <strong style="color:#bbb;">Flips dev champion into C-suite conversation</strong> using the customer's own success metrics.</div>
+    </div>
+  </div>
+  <div class="card" style="border-left:2px solid #1e2e1e;">
+    <div class="card-label">Profile 04 — The next hire as we scale</div>
+    <div class="card-title">The Post-Sale Bridge</div>
+    <div class="card-body">Thinks land-and-expand from Day 1. Designs POCs with the renewal in mind. Builds the champion map that survives the handoff. Turns $200K into $2M in 18 months. <em style="color:#555;">The same instinct eventually builds the SI/partner motion — when Post-Sale Bridge can't cover expansion volume alone, that's when you build the channel.</em></div>
+  </div>
+  <div style="margin-top:10px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; font-family:var(--mono); font-size:9px; color:#333;">
+    <div>Technical Storyteller → wins CTO/CEO</div>
+    <div>Developer Whisperer → wins engineers</div>
+    <div>Enterprise Navigator → converts to commercial outcome</div>
+  </div>
+</div>
+
+<!-- S7: HOW I HIRE -->
+<div class="slide" id="s7">
+  <div class="corner">01 — HIRING FOR THE AWKWARD TEENAGE YEARS</div>
+  <div class="two-col" style="gap:44px;">
+    <div>
+      <div class="eyebrow">How I hire — four components</div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Coaching foundation</strong> — every candidate gets a dedicated hiring coach and standardized prep. I don't want the most prepared. I want the most capable. Same starting conditions. What's different is what they do with it.</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Customer story presentation</strong> — limbic grabber, north star in 60 sec, 10-K research required, customer discovery voice, outcomes not features, Why Change / Why Now / Why Cursor. Did they grab the room in the first 5 minutes?</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Discovery practice session</strong> — live, unscripted. I play the skeptical executive. The near-miss: technically excellent, can't pivot from technical rapport to business consequence. <em>Can they learn while the conversation is happening?</em></div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>48-hour build challenge</strong> — Agent mode + .cursor/rules + MCP. Not just a clean UI. They built something real and they know why it worked. Peer review from Day 1 — the team owns the bar, not just me.</div></div>
+    </div>
+    <div>
+      <div class="eyebrow">How I close</div>
+      <div class="quote" style="margin-bottom:14px;">
+        <div class="quote-attr">Developer Whisperer close</div>
+        <div class="quote-text">Cursor is building a purpose-built model for engineering — the best interface that has ever existed for the way developers actually want to work. You were built for this product. The work isn't just using it — it's helping people like you do their best work.</div>
+      </div>
+      <div class="quote" style="margin-bottom:14px;">
+        <div class="quote-attr">Technical Storyteller close</div>
+        <div class="quote-text">At Cursor, the transformation conversation isn't a wrapper around the product — <em>it's the product story itself.</em> They're not selling transformation as a concept anymore. They're selling the thing that actually delivers it. Once-in-a-career alignment.</div>
+      </div>
+      <div class="signal">
+        <div class="signal-label">Scaling without diluting quality</div>
+        <div class="signal-text">PLG hiring and enterprise hiring feel like the same job. They're not. This framework finds both — and keeps the bar self-reinforcing as the team grows.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S8: CULTURE FRAME -->
+<div class="slide slide-center" id="s8">
+  <div class="corner">02 — THE CULTURE: NOTHING BELOW YOU</div>
+  <div class="eyebrow">Servant leadership first</div>
+  <div class="h1" style="font-size:clamp(22px,3vw,38px); margin-bottom:20px;">
+    My response in that moment<br><em>is the culture.</em>
+  </div>
+  <div class="rule"></div>
+  <div class="quote" style="max-width:560px; margin-bottom:18px;">
+    <div class="quote-text">"My job is not to be the smartest person in the room. My job is to <em>raise the ceiling</em> of what every person in the room can do."</div>
+  </div>
+  <div class="body" style="color:#444; max-width:560px;">
+    When two people disagree in a meeting. When someone misses badly. When a peer leader undercuts my team. The room is watching — not for the outcome, but for how I handle it. That moment teaches the team more about what we actually believe than any value I could name.<br><br>
+    Everything I'm about to describe is something I've done first. Not asked for. Done.
+  </div>
+</div>
+
+<!-- S9: FOUR VALUES -->
+<div class="slide" id="s9">
+  <div class="corner">02 — THE CULTURE: NOTHING BELOW YOU</div>
+  <div class="eyebrow">Four values — demonstrated, not declared</div>
+  <div style="max-width:700px; margin-bottom:14px;">
+    <div class="vrow">
+      <div class="vkey">passion</div>
+      <div class="vval">The craft of making a customer feel seen before you show them anything. Metallica. Iron Maiden — we showed them a financial future past touring. Disney cross-cloud vision. DDAC keynote. <strong>Built Why Change programs so others could do the same.</strong> Curated the best people in the company. Laughed along the way. Relentless craft around the customer story.</div>
+    </div>
+    <div class="vrow">
+      <div class="vkey">authenticity</div>
+      <div class="vval">People-first shows up in behavior. Brought Slack and Tableau cultures into Salesforce while protecting what made each great. VTO. Recognition systems. <strong>Trusted my leader to rehire someone I'd written off — he became one of our most creative minds.</strong> Sometimes the best decision you make is the one you don't make alone.</div>
+    </div>
+    <div class="vrow">
+      <div class="vkey">creativity</div>
+      <div class="vval">Slack skills before Salesforce had an agent strategy. Vibe coding sessions. Claude + Tableau MCP. LangChain + Tableau VDS that <strong>inspired the product team to model their next release on what we designed together.</strong> Prototype Factory instinct — build before anyone asks.</div>
+    </div>
+    <div class="vrow">
+      <div class="vkey">playfulness</div>
+      <div class="vval">Psychological safety as a system. The quietest voice gets heard before the loudest gets the final word. Leaders culpable in decisions. <strong>Named Coach of the Year by my leadership team and sales partners for the climate I cultivated.</strong> The laughter is the signal that the safety is real.</div>
+    </div>
+  </div>
+  <div class="signal">
+    <div class="signal-label">The thing I got wrong</div>
+    <div class="signal-text">Waited too long to move on a manager who was bringing the team down. When I finally acted, the team thrived almost immediately. Protecting the team from the wrong person is sometimes the most important thing a leader can do.</div>
+  </div>
+</div>
+
+<!-- S10: PERFORMANCE REVIEWS + RECOGNITION -->
+<div class="slide" id="s10">
+  <div class="corner">02 — THE CULTURE: NOTHING BELOW YOU</div>
+  <div class="two-col" style="gap:44px;">
+    <div>
+      <div class="eyebrow">Performance reviews — three layers</div>
+      <div class="body-sm" style="color:#555; margin-bottom:12px; font-style:italic;">If someone genuinely understands why their work matters — the right behavior follows. You don't need to manage people who see the why.</div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Personal</strong> — proud of / wish I'd done differently / where next. Pride first. Direction third.</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Multiplier audit</strong> — what did you teach, build, create, learn? Equal weight to metrics. An SE who hit numbers but kept everything in their head is not a high performer at Cursor.</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Strategic alignment</strong> — can you draw the line from your work to Cursor's $2B→$6B trajectory? What's your 1–3 year plan and how does achieving it help us get there?</div></div>
+      <div class="signal">
+        <div class="signal-label">Goal-setting at the start of every quarter</div>
+        <div class="signal-text">"You want enterprise leadership in 2 years. That means you own a $1M+ deal end to end this year. Which means a named economic buyer in active evaluation by Q2. Your goal and Cursor's goal are the same goal. Let's build the plan." That's compliance vs. conviction.</div>
+      </div>
+    </div>
+    <div>
+      <div class="eyebrow">Recognition as a system</div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>I recognize the behavior I want more of</strong> — not just the outcome. The invisible multiplier behaviors go unnoticed and eventually stop happening.</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Specific and public</strong> — "The way you reframed that CISO objection — turning data residency from a blocker into a proof point — that's the move I want every SE to make." Specificity teaches the whole team.</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Kudos channel · SE-nominated awards · Slack wow emoji creator</strong> — lateral recognition, peer judgment, native celebration</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Recognition during hard times</strong> — the deal that didn't close but where the SE ran their best discovery session. Effort and resilience named. Keeps the team swinging at hard problems instead of retreating to safe ones.</div></div>
+      <div class="signal">
+        <div class="signal-label">The proof point</div>
+        <div class="signal-text">Coach of the Year — Slack + Tableau simultaneous integrations, no playbook, team that had never read a 10-K. Built the motion with them, not for them.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S11: PROGRAMS -->
+<div class="slide" id="s11">
+  <div class="corner">02 — THE CULTURE: NOTHING BELOW YOU</div>
+  <div class="eyebrow">The programs I actually build</div>
+  <div class="two-col" style="gap:36px;">
+    <div>
+      <div class="prog">
+        <div class="prog-title">SE Excellence Program</div>
+        <div class="prog-body">Cultural transformation — not a training curriculum. Inherited Tableau SEs who were brilliant BI demos but not enterprise outcome sellers. Same gap Cursor is navigating: developer-credible FEs being asked to convert a win into an enterprise contract. Took two years. Resistance was identity not capability. Sold the why. ACV increased, deal size expanded, cross-sell grew. <em>From technically excellent to commercially essential. I've done this before.</em></div>
+      </div>
+      <div class="prog">
+        <div class="prog-title">Field-Product Feedback Loop</div>
+        <div class="prog-body">The best product feedback I've given was a prototype. LangChain + Tableau VDS. Claude + Tableau MCP. Slackbot agents. None started as formal feedback — they started as seeing a gap and closing it. Direct relationships with PMs built through genuine curiosity. <em>The informal channel becomes the most trusted channel.</em></div>
+      </div>
+      <div class="prog">
+        <div class="prog-title">Big Rocks Review</div>
+        <div class="prog-body">Year-long deal health diagnostic across twelve dimensions — exec sponsorship, compelling event, competitive risk, mutual close plan. No surprises at end of quarter because everyone sees the gaps forming in real time. <em>Two-in-a-boat from a concept into a system.</em></div>
+      </div>
+    </div>
+    <div>
+      <div class="prog">
+        <div class="prog-title">PLG Conversion Sprints</div>
+        <div class="prog-body">20 accounts with highest Pro developer density, enterprise conversation plan for each, in a room, in one afternoon. <em>The mechanism that systematically works the PLG conversion gap.</em></div>
+      </div>
+      <div class="prog">
+        <div class="prog-title">Elevating the SE Voice</div>
+        <div class="prog-body">SE QBR — account strategies for peer review, not status updates. SE huddle — one customer story, one product insight, one coaching moment. Wins channel. Demo swap. Quarterly SE-nominated awards. Monthly learning ritual: "what did we try that didn't work?" <em>Celebrated, not buried.</em></div>
+      </div>
+      <div class="signal">
+        <div class="signal-label">Technical rigor as cultural norm</div>
+        <div class="signal-text">Every FE can explain what Cursor did and why. Can run discovery with a Staff Engineer and earn the response. Knows the difference between what the model does and what the harness does. That's the floor — not gatekeeping, a professional standard.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S12: 10/20/30 ARC -->
+<div class="slide slide-center" id="s12">
+  <div class="corner">03 — 10/20/30: BACK TO FIRST PRINCIPLES</div>
+  <div class="eyebrow">The themes</div>
+  <div class="arc" style="margin-bottom:18px;">
+    <div class="arc-block">
+      <div class="arc-num">10</div>
+      <div class="arc-title">In the field,<br>not above it.</div>
+      <div class="arc-sub">Orientation. Listening. Hypothesis formation.</div>
+    </div>
+    <div class="arc-block">
+      <div class="arc-num">20</div>
+      <div class="arc-title">First things<br>first.</div>
+      <div class="arc-sub">Selective. Highest-leverage moves only.</div>
+    </div>
+    <div class="arc-block">
+      <div class="arc-num">30</div>
+      <div class="arc-title">Honest<br>assessment.</div>
+      <div class="arc-sub">Clarity, not victory. Foundation laid.</div>
+    </div>
+  </div>
+  <div style="max-width:600px;">
+    <div class="fp-row"><div class="fp-num">—</div><div class="fp-text" style="font-size:11px; color:#777;">Orientation before operation — you can't fix what you don't understand</div></div>
+    <div class="fp-row"><div class="fp-num">—</div><div class="fp-text" style="font-size:11px; color:#777;">Learn by doing, not before doing — listening from inside the deals, not above them</div></div>
+    <div class="fp-row"><div class="fp-num">—</div><div class="fp-text" style="font-size:11px; color:#777;">Ideas not questions — come with a point of view from Day 1</div></div>
+    <div class="fp-row"><div class="fp-num">—</div><div class="fp-text" style="font-size:11px; color:#777;">Build on what's already working — Day 20 built from Day 10's intelligence</div></div>
+    <div class="fp-row"><div class="fp-num">—</div><div class="fp-text" style="font-size:11px; color:#777;">Player-coach from Day 1 — I add scale as a technical resource, not just a manager</div></div>
+    <div class="fp-row"><div class="fp-num">—</div><div class="fp-text" style="font-size:11px; color:#777;">The plan serves the outcome — not the other way around</div></div>
+  </div>
+</div>
+
+<!-- S13: DAY 10 -->
+<div class="slide" id="s13">
+  <div class="corner">DAY 10</div>
+  <div class="day-header"><div class="day-num">10</div><div class="day-label">In the field, <em>not above it.</em></div></div>
+  <div class="posture">Posture: I'm a guest. I haven't earned the right to change anything yet.</div>
+  <div class="two-col" style="gap:32px;">
+    <div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Ride every active deal — listener only.</strong> How do SEs open? Where do they lose the room? What objections are stalling deals?</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Use the product daily + map the tech stack.</strong> What's been built in Claude? What demos exist? What's manual that shouldn't be? Map team fluency across the six value layers — where each SE is on that spectrum.</div></div>
+      <div class="signal" style="margin-bottom:10px;">
+        <div class="signal-note">// show cursor-value-layers.html in browser at this moment</div>
+      </div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Get into the tools.</strong> How is a technical win defined and recorded? How does SE forecast sit alongside sales forecast? CRM vs. Gong vs. Slack — those three things are rarely the same. The gap between them is the most important intelligence.</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>1:1s — patterns, personalities, energy.</strong> How they like to be led. What they're exceptional at. What would make their job easier right now.</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Map what great looks like.</strong> Customer wins, best demos, what lands by persona, product intelligence, POC health, roadmap. Don't touch anything until I understand what's working.</div></div>
+    </div>
+    <div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Come with hypotheses, not demands.</strong> Segmentation, maturity curve, Geoffrey Moore, Copilot renewal, SpaceX objection answer ready. Pressure test — don't announce.</div></div>
+      <div class="signal" style="margin-bottom:10px;">
+        <div class="signal-label">Primary hypothesis</div>
+        <div class="signal-text">The PLG-to-enterprise conversion playbook. Every other idea exists somewhere. This one doesn't. That gap — between the developer on a Pro plan and the CTO who signs the enterprise agreement — is the most interesting problem in enterprise software. By Day 10 I have a POV. By Day 20 I'm testing it.</div>
+      </div>
+      <div class="signal" style="margin-bottom:10px;">
+        <div class="signal-label">Strong POV loosely held</div>
+        <div class="signal-text">My sequencing instinct: Sales partnership operating system before SE enablement. But if Day 10 tells me the Sales rhythm is already strong and the gap is methodology, the sequencing flips. Walking in with a view. Not a conclusion.</div>
+      </div>
+      <div class="signal">
+        <div class="signal-label">How I know Day 10 is working</div>
+        <div class="signal-text">People are telling me things they haven't told anyone else. If everyone gives me the polished version, I'm still being managed.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S14: DAY 20 -->
+<div class="slide" id="s14">
+  <div class="corner">DAY 20</div>
+  <div class="day-header"><div class="day-num">20</div><div class="day-label">First things <em>first.</em></div></div>
+  <div class="posture">Posture: I'm selective. Highest-leverage moves only. Not installing everything at once.</div>
+  <div class="two-col" style="gap:32px;">
+    <div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Carrying the bag.</strong> In 2–3 active enterprise opps as a working FEM. Customer credibility = being useful in the room. By Day 20 I've had one PM conversation where I showed them something from the field that reframed how they were thinking. That's when Product stops seeing FE as a sales function.</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Install the Sales cadence — the one system worth building first.</strong> Big Rocks Review running. SE forecast generated not assembled. MEDDIC on every active opp — it's the complement to Big Rocks: Big Rocks tells you where a deal is stalling, MEDDIC tells you whether it deserves your time. Mutual close plans. Morning briefing started.</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Ship the first SE Skill</strong> — built from Day 10 intelligence. One skill, not five. /create-skill. Team uses it before I declare it finished.</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>One early win.</strong> One enterprise POC redesigned — not closed, redesigned. Named champion. Specific success criteria. Clear go/no-go. Proves three things simultaneously.</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>First team learning session.</strong> What we're seeing, what's working, what one person knows that everyone should know.</div></div>
+    </div>
+    <div>
+      <div class="signal" style="margin-bottom:10px;">
+        <div class="signal-label">The Glass Product direction</div>
+        <div class="signal-text">The direction is a glass product — you describe what you want, agents build and test it, BugBot verifies it, a production-ready PR comes out the other end. The developer shifts from executor to director. Cursor in Teams and Jira is the first piece of that loop running outside the IDE. That's the motion I'm building the SE team to understand and sell.</div>
+      </div>
+      <div class="signal" style="margin-bottom:10px;">
+        <div class="signal-label">The AI-native operating model</div>
+        <div class="signal-text">Not a new stack — your stack with intelligence doing the work in between. Systems come to the team. The team doesn't go to the systems. Forecast generated not assembled. 40 hours of calls → six moments that matter.</div>
+      </div>
+      <div class="signal">
+        <div class="signal-label">How I know Day 20 is working</div>
+        <div class="signal-text">Someone used the SE Skill I built without me asking them to. If the only person using what I built is me — I built the wrong thing or I haven't earned the team's trust yet.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S15: DAY 30 -->
+<div class="slide" id="s15">
+  <div class="corner">DAY 30</div>
+  <div class="day-header"><div class="day-num">30</div><div class="day-label">Honest <em>assessment.</em></div></div>
+  <div class="posture">Posture: I'm not declaring victory. I'm declaring clarity. The enterprise motion takes 6–12 months to build.</div>
+  <div class="two-col" style="gap:32px;">
+    <div>
+      <div class="h3" style="color:#555; margin-bottom:12px;">What exists that didn't on Day 1</div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>The Sales relationship is real.</strong> Two-in-a-boat running — not perfectly, but genuinely. Test: is my Sales leader bringing me into conversations I wasn't invited to?</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>One SE Skill live and used</strong> by at least two SEs without being asked. The seed of the Golden Demo principle.</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>One deal is better because I was in it.</strong> You don't have to wonder if I can do the job — you've seen me do it.</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>I know what I don't know.</strong> GTM tech stack partially mapped. Hypotheses pressure tested — some held, some didn't. Product relationship started — one conversation, not a system yet. Hiring pipeline — first conversations, not candidates.</div></div>
+      <div class="signal" style="margin-top:12px;">
+        <div class="signal-label">The failure mode I'm watching for</div>
+        <div class="signal-text">If I over-invested in systems before earning the right to install them — I'll call that early and adjust. The plan serves the outcome. The outcome doesn't serve the plan.</div>
+      </div>
+    </div>
+    <div>
+      <div class="h3" style="color:#555; margin-bottom:12px;">Three numbers + one conversation</div>
+      <div class="mrow"><div><div class="m-label">FE coverage ratio</div><div class="m-dim">≥70% of enterprise deals</div></div><div class="m-horizon now">Move D30</div></div>
+      <div class="mrow"><div><div class="m-label">PLG conversion gap</div><div class="m-dim">Accounts moved from unconverted to active</div></div><div class="m-horizon now">Move D30</div></div>
+      <div class="mrow"><div><div class="m-label">Sales NPS on FE</div><div class="m-dim">Do AEs want FE earlier than Day 1?</div></div><div class="m-horizon now">Move D30</div></div>
+      <div class="signal" style="margin-top:12px;">
+        <div class="signal-label">The one conversation: Sahil</div>
+        <div class="signal-text">Here's what I found. Here's what I built. Here's what's working. Here's what I got wrong. Here's what the next 60 days need to look like. Here's the first thing I want to automate that we're still doing manually.</div>
+      </div>
+      <div class="signal" style="margin-top:8px;">
+        <div class="signal-label">The honest close</div>
+        <div class="signal-text">I'm not here to tell you I'll build the enterprise motion in 30 days. I'm here to tell you that in 30 days you'll know I'm the right person to build it.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S16: LONGER ARC -->
+<div class="slide" id="s16">
+  <div class="corner">THE LONGER ARC</div>
+  <div class="eyebrow">60 · 90 · Beyond</div>
+  <div class="h2" style="font-size:clamp(16px,1.8vw,22px); margin-bottom:18px;">Everything in the first 30 days is<br>orientation, relationship, and <em>first proof points.</em></div>
+  <div class="two-col" style="gap:40px;">
+    <div>
+      <div class="longer-block">
+        <div class="longer-label">Days 30–60 — GTM Operating System</div>
+        <div class="longer-title">The machine starts running</div>
+        <div class="brow" style="margin-top:6px;"><div class="brow-dot"></div><div class="brow-text">Morning briefing live — full deal context assembled, no swivel-chair</div></div>
+        <div class="brow"><div class="brow-dot"></div><div class="brow-text">Forecast generated not assembled — Claude reconciles CRM vs. Gong, Slack, email</div></div>
+        <div class="brow"><div class="brow-dot"></div><div class="brow-text">AI coaching culture running — 40 hours of calls → six moments that matter</div></div>
+        <div class="brow"><div class="brow-dot"></div><div class="brow-text">Slack as the front door — systems come to the team</div></div>
+      </div>
+      <div class="longer-block">
+        <div class="longer-label">Days 45–90 — Team and Motion</div>
+        <div class="longer-title">First hires + SE Excellence fully running</div>
+        <div class="brow" style="margin-top:6px;"><div class="brow-dot"></div><div class="brow-text">Developer Whisperer, Technical Storyteller, Enterprise Navigator placed</div></div>
+        <div class="brow"><div class="brow-dot"></div><div class="brow-text">SE Excellence Program fully running — Strategic Coaches appointed, Why Change motion installed</div></div>
+        <div class="brow"><div class="brow-dot"></div><div class="brow-text">PLG Conversion Sprints running systematically</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="longer-block">
+        <div class="longer-label">Days 60–120 — Coverage Model Validated</div>
+        <div class="longer-title">Segmentation confirmed, verticals watched</div>
+        <div class="brow" style="margin-top:6px;"><div class="brow-dot"></div><div class="brow-text">Segmentation confirmed — digital native vs. regulated enterprise coverage refined</div></div>
+        <div class="brow"><div class="brow-dot"></div><div class="brow-text">Copilot renewal play sharpened and running</div></div>
+        <div class="brow"><div class="brow-dot"></div><div class="brow-text">Verticalization signals watched — first industry breaking away gets the dedicated play</div></div>
+        <div class="brow"><div class="brow-dot"></div><div class="brow-text">Field-Product Feedback Loop generating consistent prototypes and product intelligence</div></div>
+      </div>
+      <div class="longer-block">
+        <div class="longer-label">Day 90+ — The Partner Motion</div>
+        <div class="longer-title">Channel extends what direct team can't reach</div>
+        <div class="brow" style="margin-top:6px;"><div class="brow-dot"></div><div class="brow-text">When Post-Sale Bridge can't cover expansion volume alone</div></div>
+        <div class="brow"><div class="brow-dot"></div><div class="brow-text">GSI relationships initiated — methodology carried into accounts direct team can't reach</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S17: METRICS -->
+<div class="slide" id="s17">
+  <div class="corner">04 — DECISION SYSTEMS, NOT DASHBOARDS</div>
+  <div class="two-col" style="gap:44px;">
+    <div>
+      <div class="eyebrow" style="margin-bottom:12px;">Seven dimensions</div>
+      <div class="mrow"><div><div class="m-label">Pipeline strategy</div><div class="m-dim">PLG-to-enterprise conversion rate</div></div><div class="m-horizon">Baseline D30</div></div>
+      <div class="mrow"><div><div class="m-label">Quality</div><div class="m-dim">FE-influenced win rate</div></div><div class="m-horizon">Baseline D30</div></div>
+      <div class="mrow"><div><div class="m-label">Velocity</div><div class="m-dim">Time-to-technical-win · target 3–4 weeks</div></div><div class="m-horizon">Baseline D30</div></div>
+      <div class="mrow"><div><div class="m-label">POC effectiveness</div><div class="m-dim">Completion rate + conversion to commercial</div></div><div class="m-horizon">Baseline D30</div></div>
+      <div class="mrow"><div><div class="m-label">Relationship</div><div class="m-dim">Sales NPS on FE</div></div><div class="m-horizon now">Move D30</div></div>
+      <div class="mrow"><div><div class="m-label">Resource allocation</div><div class="m-dim">Prioritization effectiveness</div></div><div class="m-horizon now">Move D30</div></div>
+      <div class="mrow"><div><div class="m-label">Product partnership</div><div class="m-dim">Field-to-product signal velocity</div></div><div class="m-horizon now">Build D20</div></div>
+    </div>
+    <div>
+      <div class="eyebrow" style="margin-bottom:12px;">The framing</div>
+      <div class="quote" style="margin-bottom:14px;">
+        <div class="quote-text">Some I'm baselining. Some I can move in 30 days. <em>The distinction matters.</em> I'm not claiming I'll bend sales-cycle metrics in a month.</div>
+      </div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Prioritization effectiveness</strong> — revenue impact per FE hour deployed. That's what pre-sales leverage actually measures. That's the number that justifies the headcount ask.</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>Field-to-product signal velocity</strong> — proves field-as-product-intelligence is a system, not a philosophy. Most FE leaders don't measure this.</div></div>
+      <div class="brow"><div class="brow-dot hi"></div><div class="brow-text"><strong>POC effectiveness</strong> — open-ended POCs are the leading indicator of wrong champion, unclear success criteria, or FE showing up too late.</div></div>
+      <div class="signal">
+        <div class="signal-label">The honest close on the 10/20/30</div>
+        <div class="signal-text">I'm not here to tell you I'll build the enterprise motion in 30 days. I'm here to tell you that in 30 days you'll know I'm the right person to build it — because you'll have seen how I think, how I operate, how I earn trust, and how I move.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- S18: WHY I'M HERE — CLOSE -->
+<div class="slide slide-center" id="s18">
+  <div class="corner">THE CLOSE</div>
+  <div style="max-width:620px;">
+    <div class="eyebrow" style="margin-bottom:16px;">Why I'm here — the first principles version</div>
+    <div class="h1" style="font-size:clamp(22px,2.8vw,36px); margin-bottom:22px;">
+      I've never had a product<br><em>this true</em> to build around.
+    </div>
+    <div class="rule"></div>
+    <div style="margin-bottom:20px;">
+      <div class="fp-row"><div class="fp-num">01</div><div class="fp-text" style="font-size:12px; color:#999;">The problem is human — 86% of engineering isn't writing code. The companies that give it back don't just move faster. They keep their best people.</div></div>
+      <div class="fp-row"><div class="fp-num">02</div><div class="fp-text" style="font-size:12px; color:#999;">The harness is the moat — models commoditize. Cursor has a three-year head start on the thing that actually matters.</div></div>
+      <div class="fp-row"><div class="fp-num">03</div><div class="fp-text" style="font-size:12px; color:#999;">The motion needs building — developer love without enterprise conversion is goodwill waiting to expire.</div></div>
+      <div class="fp-row"><div class="fp-num">04</div><div class="fp-text" style="font-size:12px; color:#999;">I've lived the inside of this — Slackbot agents, Tableau semantic layer, Salesforce going headless through MCP. The same architecture. A different angle.</div></div>
+      <div class="fp-row"><div class="fp-num">05</div><div class="fp-text" style="font-size:12px; color:#999;">I want to come here to learn — discomfort is important to me. I've never been more certain this is exactly where I'm supposed to be.</div></div>
+    </div>
+    <div class="four-col">
+      <div class="stat-box"><div class="stat-val">90%+</div><div class="stat-desc">Salesforce adoption — 3 weeks. The case study I lived.</div></div>
+      <div class="stat-box"><div class="stat-val">26→4</div><div class="stat-desc">Engineer days per module. Legacy coverage cut.</div></div>
+      <div class="stat-box"><div class="stat-val">8-fig</div><div class="stat-desc">Contracts — grassroots dev love converted to enterprise.</div></div>
+      <div class="stat-box"><div class="stat-val">Day 1</div><div class="stat-desc">I add scale as a technical resource, not just a manager.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <button class="nav-btn" onclick="go(-1)">← prev</button>
+  <div class="nav-dots" id="dots"></div>
+  <span class="slide-count" id="counter">1 / 18</span>
+  <button class="nav-btn" onclick="go(1)">next →</button>
+</div>
+
+</div>
+<script>
+const TOTAL = 18;
+let cur = 1;
+const dotsEl = document.getElementById('dots');
+for (let i = 1; i <= TOTAL; i++) {
+  const d = document.createElement('button');
+  d.className = 'nav-dot' + (i === 1 ? ' active' : '');
+  d.setAttribute('aria-label', 'Slide ' + i);
+  d.onclick = () => jump(i);
+  dotsEl.appendChild(d);
+}
+function jump(n) {
+  document.getElementById('s' + cur).classList.remove('active');
+  dotsEl.children[cur - 1].classList.remove('active');
+  cur = Math.max(1, Math.min(TOTAL, n));
+  const s = document.getElementById('s' + cur);
+  s.classList.add('active');
+  s.scrollTop = 0;
+  dotsEl.children[cur - 1].classList.add('active');
+  document.getElementById('counter').textContent = cur + ' / ' + TOTAL;
+}
+function go(dir) { jump(cur + dir); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); go(1); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+});
+</script>
+</body>
+</html>

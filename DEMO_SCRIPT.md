@@ -18,7 +18,7 @@ Proof point:
 ## 0:45-2:00 | Codebase reasoning (not autocomplete)
 
 Action:
-- Open `index.html` and `ProjectRequirements.md`.
+- Open `cursor-value-layers.html` and `ProjectRequirements.md`.
 - In chat: ask architecture-level question with both files attached.
 
 Talk track:

@@ -95,7 +95,7 @@ If you are over time at minute 6:
 Use these if you need one clean save:
 
 ```text
-In index.html, add only a loading state around research requests. Keep behavior unchanged.
+In cursor-value-layers.html, add only a loading state around research requests. Keep behavior unchanged.
 ```
 
 ```text

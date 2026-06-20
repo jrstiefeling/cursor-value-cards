@@ -7,7 +7,7 @@ The prompts are scoped to this single-file app and its existing rules.
 
 ### Task A1 - UI polish in Research mode
 ```text
-Improve the Research mode UX in index.html with a small visual polish:
+Improve the Research mode UX in cursor-value-layers.html with a small visual polish:
 1) Add a subtle loading shimmer to the research status area while a lookup is in progress.
 2) Keep all behavior unchanged.
 3) Follow project rules and keep code style consistent.
@@ -16,7 +16,7 @@ Improve the Research mode UX in index.html with a small visual polish:
 
 ### Task A2 - error handling hardening
 ```text
-In index.html, review all external API fetch calls used by Research mode and ensure each has explicit try/catch and a graceful user-facing message in researchStatus. Do not change data schema. Keep edits minimal and show me a diff summary before applying.
+In cursor-value-layers.html, review all external API fetch calls used by Research mode and ensure each has explicit try/catch and a graceful user-facing message in researchStatus. Do not change data schema. Keep edits minimal and show me a diff summary before applying.
 ```
 
 ### Task A3 - docs update
@@ -32,17 +32,17 @@ Keep wording concise and enterprise-facing.
 
 ### Task B1 - debounce tuning
 ```text
-In handleCompanySearch inside index.html, add a 400ms debounce so search does not fire on every keystroke. Preserve existing behavior and keep function readability high.
+In handleCompanySearch inside cursor-value-layers.html, add a 400ms debounce so search does not fire on every keystroke. Preserve existing behavior and keep function readability high.
 ```
 
 ### Task B2 - ROI input validation
 ```text
-In index.html ROI mode logic, add guardrails so invalid or empty inputs show a helpful inline message instead of producing NaN or empty output. Keep UI tone calm and executive-friendly.
+In cursor-value-layers.html ROI mode logic, add guardrails so invalid or empty inputs show a helpful inline message instead of producing NaN or empty output. Keep UI tone calm and executive-friendly.
 ```
 
 ### Task B3 - accessibility quick pass
 ```text
-Apply a lightweight accessibility pass in index.html:
+Apply a lightweight accessibility pass in cursor-value-layers.html:
 - Add aria-labels to icon-only controls
 - Ensure buttons and tabs have clear focus states
 - Do not redesign the layout

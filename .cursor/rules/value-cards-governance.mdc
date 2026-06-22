@@ -1,0 +1,44 @@
+---
+description: Governance rules for Cursor Value Cards app changes
+alwaysApply: true
+---
+
+# Cursor Value Cards Governance
+
+## Project Architecture
+- Treat this project as a single-file SPA in `index.html` (logic, styles, and data stay in that file unless explicitly asked to extract modules).
+- Do not add a build step, `package.json`, or external dependencies unless explicitly requested.
+- Assume GitHub Pages hosting: use relative asset paths and no server-side logic.
+
+## Required Data Shapes
+- Capability entries must use: `{ id, title, sub, detail, outcomes[] }`.
+- Outcome entries must use: `{ id, title, sub, detail, caps[], cs }`.
+- `cs` is an HTML string and may include anchors.
+- Every `caps[]` item must reference a valid capability `id`.
+- `guidanceUseCases[]` entries must use:
+  `{ id, title, base, industry: { fintech, tech, defense, health, retail }, cursor: [{ title, sub, tags[] }], claude: [{ title, sub, tags[] }] }`.
+
+## Code Quality And Runtime Rules
+- Add JSDoc comments for all new JavaScript functions (purpose, params, return value).
+- Do not leave `console.log` in production code.
+- Route state mutations through the `state` object and trigger `render()`.
+- Avoid direct DOM manipulation outside `render()` and render helpers.
+- Keep URL hash ownership in `writeHash()` and `parseHash()`.
+- Never hardcode credentials or API keys in source files.
+
+## Security And External Calls
+- Do not add authenticated API calls unless explicitly requested.
+- Research mode should remain best-effort with public endpoints only.
+- External links opened in a new tab must use `target="_blank" rel="noopener noreferrer"`.
+
+## Content And Demo Integrity
+- Use outcome-first language for card copy (lead with business result).
+- Do not remove quantified evidence stats in `cs` fields without flagging it.
+- Preserve all five `industryLanguage` verticals: fintech, tech, defense, health, retail.
+- Preserve persona coverage in `executiveOutcomeAffinity` (`cto`, `ciso`, `cfo`, `cpo` each map to at least two outcomes).
+- Ensure fresh-load demo reliability and graceful errors for research failures (no uncaught exceptions).
+- Keep industry and persona filters non-empty during demos.
+- Keep ROI output positive for reasonable inputs.
+
+## Agent Behavior
+- If a requested change conflicts with these rules, pause and ask for explicit override before proceeding.
